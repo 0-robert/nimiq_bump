@@ -17,10 +17,10 @@ import { createFire, heatFrom } from './fire.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
-  slot: $('slot'), fire: $('fire'), day: $('day'), badge: $('badge'),
+  slot: $('slot'), fire: $('fire'), stamp: $('stamp'), state: $('state'),
   message: $('message'), holder: $('holder'),
   price: $('price'), payout: $('payout'),
-  figClose: $('fig-close'), clock: $('clock'),
+  clock: $('clock'),
   action: $('action'), actionLabel: $('action-label'),
   compose: $('compose'), draft: $('draft'), name: $('name'), count: $('count'), cancel: $('cancel'),
   status: $('status'), tape: $('tape'), events: $('events'),
@@ -83,23 +83,23 @@ function render(next) {
   const holder = next.holder;
   const mine = holder && address && normaliseAddress(holder.address) === address;
 
-  el.day.textContent = `Day ${next.round}`;
+  el.stamp.firstChild.textContent = `Day ${next.round} / Closes `;
 
   if (holder) {
     el.message.textContent = holder.message;
     el.holder.textContent = mine
       ? 'You have it'
       : `Held by ${holder.name || shortAddress(holder.address)}`;
-    el.badge.hidden = false;
-    el.badge.dataset.settled = String(holder.settled);
-    el.badge.textContent = holder.settled ? 'Settled' : 'Settling';
-    el.badge.title = holder.settled
+    el.state.hidden = false;
+    el.state.dataset.settled = String(holder.settled);
+    el.state.textContent = holder.settled ? 'Settled' : 'Settling';
+    el.state.title = holder.settled
       ? 'Final. A macro block has confirmed it.'
       : 'On chain. Waiting for the batch that makes it final.';
   } else {
-    el.message.textContent = 'Nobody has it yet.';
-    el.holder.textContent = 'Open for anyone';
-    el.badge.hidden = true;
+    el.message.textContent = 'Nobody has it yet';
+    el.holder.textContent = 'Open to anyone';
+    el.state.hidden = true;
   }
 
   // Replay the landing only when the holder actually changed hands.
@@ -155,8 +155,7 @@ function renderTotals(totals) {
 function tick() {
   if (!endsAt) {
     el.clock.textContent = '\u2014';
-    el.figClose.dataset.urgent = 'false';
-    el.day.dataset.urgent = 'false';
+    el.stamp.dataset.urgent = 'false';
     fire.setHeat(0);
     return;
   }
@@ -165,9 +164,7 @@ function tick() {
   el.clock.textContent = formatClock(left);
 
   // The last ten minutes of the day are where it gets decided.
-  const closing = left <= 600_000;
-  el.figClose.dataset.urgent = String(closing);
-  el.day.dataset.urgent = String(closing);
+  el.stamp.dataset.urgent = String(left <= 600_000);
 
   fire.setHeat(heatFrom({
     price: view?.price ?? 100,

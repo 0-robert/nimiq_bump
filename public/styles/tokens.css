@@ -1,48 +1,47 @@
 /*
   Design tokens.
 
-  A trading desk, not a card layout. Hairline borders instead of shadows,
-  corners just soft enough not to be sharp, and figures doing the talking.
-  Dark for two reasons: the flame is additive light and disappears on white,
-  and money in motion reads better against it.
+  Editorial, not an app chrome. The references are type-led: an enormous tight
+  grotesque doing the work, micro labels set in mono, hard rectangles, one
+  orange, and paper rather than a screen. No cards, no shadows, no rounded
+  corners, nothing that floats.
+
+  The one dark surface is the slot itself. That is deliberate twice over: it
+  hard-blocks against the paper the way the references block colour, and the
+  flame is additive light, so it needs somewhere dark to burn.
 */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --ground: #0a0c10;
-  --panel: #11151e;
-  --panel-2: #161b27;
-  --line: #23283a;
-  --line-soft: #171c28;
+  --paper: #f2f0ec;
+  --paper-deep: #e8e5df;
+  --ink: #0b0b0c;
+  --ink-soft: #55565a;
+  --ink-faint: #8e8f95;
+  --rule: #d3d0c9;
 
-  --text: #e8eaf0;
-  --text-dim: #9aa2bc;
-  --text-faint: #69718c;
-  --text-ghost: #525a75;
+  /* On the black slot. */
+  --slot: #0b0b0c;
+  --on-slot: #f7f6f3;
+  --on-slot-faint: #8a8b90;
 
-  /* Each one means exactly one thing and nothing else uses it. */
-  --blue: #31b3ff;      /* the price, the primary action */
-  --up: #2fd6a6;        /* money arriving */
-  --hot: #ff5c48;       /* the close, once it is near */
-  --gold: #f0b323;      /* a day already won */
+  /* One accent. Used as flat blocks and marks, never as a gradient. */
+  --orange: #ff4d17;
+  --up: #12805f;
 
   --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 
-  --step--2: 10px;
-  --step--1: 12px;
-  --step-0: 14px;
-  --step-1: clamp(1rem, 0.95rem + 0.3vw, 1.2rem);
-  --step-2: clamp(1.55rem, 1.3rem + 1.2vw, 2.1rem);
-  --step-3: clamp(1.6rem, 1.35rem + 1.3vw, 2.2rem);
+  --micro: 10px;
+  --small: 12px;
+  --base: 14px;
+  /* The hero numerals and the message. Deliberately oversized. */
+  --figure: clamp(2.9rem, 2rem + 4.4vw, 4.4rem);
+  --message: clamp(1.9rem, 1.4rem + 2.4vw, 2.9rem);
 
-  --pad: 14px;
-  --radius: 4px;
-  --radius-sm: 3px;
-
-  --dur: 360ms;
-  --dur-fast: 150ms;
+  --gap: 14px;
+  --dur: 340ms;
   --ease: cubic-bezier(0.16, 0.84, 0.28, 1);
-  --ease-back: cubic-bezier(0.34, 1.4, 0.64, 1);
 }

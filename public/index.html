@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BUMP</title>
 <meta name="description" content="One slot, shared by everyone. Take it by paying 1.5x, and the holder you took it from gets the money.">
-<meta name="theme-color" content="#0a0c10">
+<meta name="theme-color" content="#f2f0ec">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="preload" href="/fonts/archivo-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/archivo-900.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/mono-500.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/app.css">
 </head>
 <body>
@@ -16,18 +16,18 @@
 
   <header class="masthead">
     <h1 class="wordmark">BUMP</h1>
-    <span class="day num" id="day" data-urgent="false">Day 1</span>
+    <span class="stamp" id="stamp" data-urgent="false">Day 1 / Closes <b id="clock">&mdash;</b></span>
   </header>
 
-  <!-- The flame behind this is driven by how hot the day has got. -->
+  <!-- One hard black block on the paper. The flame burns along its base. -->
   <section class="slot" id="slot">
     <canvas class="slot-fire" id="fire" aria-hidden="true"></canvas>
     <div class="slot-head">
       <span class="lbl">On the slot</span>
-      <span class="badge" id="badge" data-settled="false" hidden>Settling</span>
+      <span class="state" id="state" data-settled="false" hidden>Settling</span>
     </div>
-    <p class="slot-message" id="message">Nobody has it yet.</p>
-    <p class="slot-holder" id="holder">Open for anyone</p>
+    <p class="slot-message" id="message">Nobody has it yet</p>
+    <p class="slot-holder" id="holder">Open to anyone</p>
   </section>
 
   <div class="figs">
@@ -38,10 +38,6 @@
     <div class="fig fig-payout">
       <span class="lbl">They get</span>
       <b class="num" id="payout">150</b>
-    </div>
-    <div class="fig fig-close" id="fig-close" data-urgent="false">
-      <span class="lbl">Closes</span>
-      <b class="num" id="clock">&mdash;</b>
     </div>
   </div>
 
@@ -57,20 +53,20 @@
         <button class="btn btn-quiet" id="cancel" type="button">Back</button>
       </footer>
     </div>
-    <button class="btn btn-go" id="action" type="button">
+    <button class="btn" id="action" type="button">
       <span id="action-label">Connect wallet</span>
     </button>
   </div>
 
   <p class="status" id="status" data-tone="plain">The day opens at 100 NIM, about three cents.</p>
 
-  <section class="tape" id="tape" hidden>
-    <h2>Tape</h2>
+  <section class="block tape" id="tape" hidden>
+    <span class="lbl">Today</span>
     <ul id="events"></ul>
   </section>
 
-  <section class="past" id="past" hidden>
-    <h2>Kept for good</h2>
+  <section class="block past" id="past" hidden>
+    <span class="lbl">Kept for good</span>
     <ul id="winners"></ul>
   </section>
 
@@ -104,10 +100,10 @@
 
   <p class="totals" id="totals" hidden></p>
 
-  <footer class="foot">
-    Built for the Nimiq Mini Apps Competition.
-    <a href="https://github.com/0-robert/bump">Source</a>, MIT licensed.
-  </footer>
+  <p class="foot">
+    Nimiq Mini Apps Competition &middot;
+    <a href="https://github.com/0-robert/bump">Source</a> &middot; MIT
+  </p>
 
 </main>
 <script type="module" src="/app.js"></script>
