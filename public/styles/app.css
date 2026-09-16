@@ -75,8 +75,8 @@ button,input,textarea { font:inherit; color:inherit; }
 .slot {
   position:relative; isolation:isolate;
   background:var(--slot); color:var(--on-slot);
-  padding:13px 13px 44px;
-  min-height:178px;
+  padding:13px 13px 42px;
+  min-height:150px;
   overflow:hidden;
   display:grid; align-content:space-between; gap:9px;
 }
@@ -191,6 +191,7 @@ button,input,textarea { font:inherit; color:inherit; }
 .block li { border-bottom:1px solid var(--rule); padding:7px 13px; }
 
 .tape li { display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:baseline; font-size:var(--small); }
+.tape li[data-kind='idle'] { grid-template-columns:1fr; color:var(--ink-faint); }
 .tape .t { font-family:var(--font-mono); font-size:var(--micro); color:var(--ink-faint); font-variant-numeric:tabular-nums; }
 .tape .what { color:var(--ink-soft); overflow-wrap:anywhere; }
 .tape .amt { font-family:var(--font-mono); font-size:var(--small); font-variant-numeric:tabular-nums; color:var(--up); }

@@ -106,9 +106,10 @@ export function install() {
   const banner = document.createElement('p');
   banner.className = 'status';
   banner.dataset.tone = 'live';
-  banner.textContent = 'Preview. A stand-in wallet, no real NIM, nothing sent to the chain.';
-  // Falls back to the body so renaming the page wrapper cannot break preview.
-  (document.querySelector('.sheet') ?? document.body).prepend(banner);
+  banner.textContent = 'Preview mode. A stand-in wallet, no real NIM, nothing sent to the chain.';
+  // Appended, not prepended: this is a footnote about the demo, and it was
+  // the first thing anyone read when it sat above the masthead.
+  (document.querySelector('.sheet') ?? document.body).append(banner);
 
   globalThis.nimiqPay = { language: 'en' };
   globalThis.nimiq = {

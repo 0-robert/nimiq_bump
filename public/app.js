@@ -29,6 +29,8 @@ const el = {
 
 const MAX_MESSAGE = 140;
 const DAY_MS = 86_400_000;
+/** The flame never goes out entirely. An unlit slot reads as a broken app. */
+const EMBERS = 0.3;
 
 const fire = createFire(el.fire);
 
@@ -97,8 +99,11 @@ function render(next) {
       ? 'Final. A macro block has confirmed it.'
       : 'On chain. Waiting for the batch that makes it final.';
   } else {
-    el.message.textContent = 'Nobody has it yet';
-    el.holder.textContent = 'Open to anyone';
+    // An empty slot used to announce that nothing was happening, which is the
+    // worst thing to show someone opening the app for the first time. It names
+    // the price and what it buys instead.
+    el.message.textContent = `${formatNim(next.price)} NIM puts you here`;
+    el.holder.textContent = 'Open to anyone. Nobody has it yet';
     el.state.hidden = true;
   }
 
@@ -158,7 +163,7 @@ function tick() {
   if (!endsAt) {
     el.clock.textContent = '\u2014';
     el.stamp.dataset.urgent = 'false';
-    fire.setHeat(0);
+    fire.setHeat(EMBERS);
     return;
   }
 
@@ -168,19 +173,23 @@ function tick() {
   // The last ten minutes of the day are where it gets decided.
   el.stamp.dataset.urgent = String(left <= 600_000);
 
-  fire.setHeat(heatFrom({
+  fire.setHeat(Math.max(EMBERS, heatFrom({
     price: view?.price ?? 100,
     floor: view?.floor ?? 100,
     endsIn: left,
     roundMs: DAY_MS,
     holder: view?.holder,
-  }));
+  })));
 }
 
 /** The tape: who took it from whom, and what it paid. */
 function renderTape(events, previous) {
-  el.tape.hidden = !events?.length;
-  if (!events?.length) return;
+  // Hiding an empty tape left a hole where the page should have had a pulse.
+  el.tape.hidden = false;
+  if (!events?.length) {
+    el.events.replaceChildren(emptyRow('Nothing yet today. First bump opens it.'));
+    return;
+  }
 
   const seen = new Set((previous ?? []).map((e) => `${e.at}:${e.actor}`));
   el.events.replaceChildren(...events.map((event) => {
@@ -207,6 +216,16 @@ function renderTape(events, previous) {
     li.append(time, what, amount);
     return li;
   }));
+}
+
+function emptyRow(text) {
+  const li = document.createElement('li');
+  li.dataset.kind = 'idle';
+  const span = document.createElement('span');
+  span.className = 'what';
+  span.textContent = text;
+  li.append(span);
+  return li;
 }
 
 /** A chosen name if there is one, otherwise enough of the address to follow along. */
