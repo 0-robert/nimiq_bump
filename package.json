@@ -9,7 +9,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "node --test test/*.test.js test/*.test.ts",
-    "copycheck": "node ../.claude/skills/avoid-ai-writing/bin/avoid-ai-writing.js copy/strings.txt"
+    "copycheck": "for f in copy/*.txt; do echo \"== $f\"; node ../.claude/skills/avoid-ai-writing/bin/avoid-ai-writing.js \"$f\"; done"
   },
   "devDependencies": {
     "wrangler": "^4.132.0"

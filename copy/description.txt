@@ -1,0 +1,9 @@
+BUMP has one message slot, and everyone who opens the app is looking at the same one. You take it by paying 1.5x whatever the current holder paid. That payment goes straight from your wallet to theirs, so the person you take it from walks away with 50% more than they put in. The only one out of pocket is whoever is still holding when the five minute clock runs out, and they keep their message in the hall of fame for good.
+
+It is for anyone who wants to be seen inside Nimiq Pay. Builders pushing their own Mini App, someone wishing a friend happy birthday, or people taking it off each other for the sport of it.
+
+Nimiq is not a garnish here. Every action in the app is a payment. A ten bump round is twenty transactions, which fees alone would kill on most chains before the round got going. Nimiq settles in about a second for a fraction of a cent, so a bid can cost three cents and still be worth making. Take the wallet out and nothing is left.
+
+Nothing is held in custody. The server issues a claim token, your wallet sends it as the transaction memo, and the server then reads the chain for a payment to the right address carrying that token before the slot changes hands. It checks the transaction actually executed, because Albatross records failed ones too.
+
+Nothing here is drawn, rolled or randomised.
