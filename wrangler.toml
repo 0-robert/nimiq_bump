@@ -1,0 +1,29 @@
+name = "bump"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[durable_objects.bindings]]
+name = "SLOT"
+class_name = "Slot"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Slot"]
+
+[ai]
+binding = "AI"
+
+[vars]
+NETWORK_ID = "24"
+RPC_URL = "https://rpc.nimiqwatch.com"
+FLOOR_NIM = "100"
+STEP_NUMERATOR = "3"
+STEP_DENOMINATOR = "2"
+ROUND_SECONDS = "300"
+CLAIM_SECONDS = "60"
+# Receives the opening bid of round 1 only. Every later round pays the previous winner.
+GENESIS_ADDRESS = "NQ07 0000 0000 0000 0000 0000 0000 0000 0000"

@@ -1,0 +1,17 @@
+{
+  "name": "bump",
+  "version": "1.0.0",
+  "description": "One slot. Take it by paying 1.5x, and the holder you take it from gets the money.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/",
+    "copycheck": "node ../.claude/skills/avoid-ai-writing/bin/avoid-ai-writing.js copy/strings.txt"
+  },
+  "devDependencies": {
+    "wrangler": "^4.132.0"
+  }
+}
