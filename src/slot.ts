@@ -116,6 +116,7 @@ export class Slot {
         wallets: slot.totals.wallets.length,
       },
       floor: this.floor,
+      roundMs: this.roundMs,
       serverTime: now,
     };
   }

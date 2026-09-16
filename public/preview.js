@@ -38,6 +38,7 @@ function view() {
     winners: slot.winners.slice(0, 12),
     totals: { ...slot.totals, wallets: slot.totals.wallets.size },
     floor: FLOOR,
+    roundMs: ROUND_MS,
     serverTime: Date.now(),
   };
 }
@@ -91,7 +92,7 @@ export function install() {
   banner.dataset.tone = 'live';
   banner.style.marginBottom = '1rem';
   banner.textContent = 'Preview. A stand-in wallet, no real NIM, nothing sent to the chain.';
-  document.querySelector('.shell').prepend(banner);
+  document.querySelector('.wrap').prepend(banner);
 
   globalThis.nimiqPay = { language: 'en' };
   globalThis.nimiq = {

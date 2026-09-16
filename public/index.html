@@ -5,46 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BUMP</title>
 <meta name="description" content="One slot, shared by everyone. Take it by paying 1.5x, and the holder you took it from gets the money.">
-<meta name="theme-color" content="#020813">
+<meta name="theme-color" content="#eef1f7">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/archivo-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles/app.css">
 </head>
 <body>
-<main class="shell">
+<main class="wrap">
 
   <header class="masthead">
     <h1 class="wordmark">BUMP</h1>
     <p class="motto">The loser cashes out.</p>
   </header>
 
-  <h2 class="spec label" id="slot-heading">On the slot</h2>
-  <section class="slot" id="slot" data-state="idle" aria-labelledby="slot-heading">
-    <div class="slot-fill" id="slot-fill">
-      <p class="slot-message slot-empty" id="message">Nobody has it yet.</p>
-      <div class="slot-meta" id="meta"></div>
+  <!-- The hero. The flame behind it is driven by how hot the round is. -->
+  <section class="hero" id="hero" data-heat="cold">
+    <canvas class="hero-fire" id="fire" aria-hidden="true"></canvas>
+    <div class="hero-body">
+      <div class="hero-top">
+        <span class="tag" id="round">Round 1</span>
+        <span class="tag tag-quiet" id="badge" hidden></span>
+      </div>
+      <p class="hero-message" id="message">Nobody has it yet.</p>
+      <p class="hero-holder" id="holder">Open for anyone</p>
     </div>
   </section>
 
-  <dl class="panel">
-    <div class="row">
-      <dt class="spec">Price</dt>
-      <dd class="price num" id="price">&mdash;</dd>
+  <section class="stats" aria-label="This round">
+    <article class="stat stat-live">
+      <span class="stat-label">Price</span>
+      <strong class="stat-value num" id="price">100</strong>
+      <span class="stat-unit">NIM to take it</span>
+    </article>
+    <article class="stat">
+      <span class="stat-label">They get</span>
+      <strong class="stat-value num" id="payout">150</strong>
+      <span class="stat-unit">paid to the holder</span>
+    </article>
+  </section>
+
+  <section class="clock-card" id="clock-card">
+    <div class="clock-head">
+      <span class="stat-label">Time left</span>
+      <strong class="clock num" id="clock">Not started</strong>
     </div>
-    <div class="row">
-      <dt class="spec">Holder gets</dt>
-      <dd class="gain num" id="payout">&mdash;</dd>
-    </div>
-    <div class="row">
-      <dt class="spec">Round ends</dt>
-      <dd class="clock num" id="clock" data-urgent="false">&mdash;</dd>
-    </div>
-    <div class="row">
-      <dt class="spec">Held by</dt>
-      <dd class="spec" id="holder" style="color:var(--text-dim)">Nobody</dd>
-    </div>
-  </dl>
+    <div class="drain" aria-hidden="true"><i id="drain-bar"></i></div>
+  </section>
 
   <div class="actions">
     <div class="compose" id="compose" hidden>
@@ -52,16 +59,16 @@
         placeholder="Say something. Everyone in the app sees it."
         aria-label="Your message"></textarea>
       <footer>
-        <span class="spec count" id="count" data-over="false">140 left</span>
-        <button class="btn btn-ghost" id="cancel" type="button">Back</button>
+        <span class="count" id="count" data-over="false">140 left</span>
+        <button class="btn btn-quiet" id="cancel" type="button">Back</button>
       </footer>
     </div>
-    <button class="btn btn-primary" id="action" type="button">Connect wallet</button>
+    <button class="btn btn-go" id="action" type="button">
+      <span id="action-label">Connect wallet</span>
+    </button>
   </div>
 
-  <p class="status" id="status" data-tone="plain">
-    Rounds start at 100 NIM, which is about three cents.
-  </p>
+  <p class="status" id="status" data-tone="plain">Rounds open at 100 NIM, about three cents.</p>
 
   <section class="past" id="past" hidden>
     <h2>Kept for good</h2>
@@ -69,36 +76,38 @@
   </section>
 
   <section class="how">
-    <h2>How it works</h2>
-    <p>
-      There is one slot and everyone sees the same one. Taking it costs 1.5x
-      whatever the current holder paid, and that payment goes straight to them
-      from your wallet. Nothing is held in the middle.
+    <p class="how-lead">
+      Pay 1.5x and the slot is yours. That money goes straight to whoever you
+      took it from, so they walk away with 50% more than they put in.
     </p>
-    <p>
-      So the person you take it from walks away with 50% more than they put in.
-      The only one out of pocket is whoever is still holding when the clock runs
-      out, and they get to keep their message up for good.
+    <p class="how-lead">
+      Hold it when the clock hits zero and your message stays up for good.
+      Everyone else already got paid.
     </p>
-    <p>
-      Every bump puts five minutes back on the clock. When it expires the price
-      drops to 100 NIM and the next round opens.
-    </p>
-    <h2>No chance element</h2>
-    <p>
-      Nothing here is drawn, rolled or randomised. The price is on screen before
-      you commit and after. You are buying one advertising slot at a published
-      price from someone who profits on the sale.
-    </p>
+    <details>
+      <summary>The rest of it</summary>
+      <p>
+        Every bump puts five minutes back on the clock. When it runs out the
+        price drops to 100 NIM and the next round opens. The opening bid of each
+        round goes to whoever won the one before.
+      </p>
+      <p>
+        Nothing is held in the middle. Your wallet pays the holder directly, and
+        the slot changes hands once the payment is on chain.
+      </p>
+      <p>
+        Nothing here is drawn, rolled or randomised. The price is on screen
+        before you commit and after. You are buying one advertising slot at a
+        published price from someone who profits on the sale.
+      </p>
+    </details>
   </section>
 
-  <div class="totals spec" id="totals" hidden></div>
+  <p class="totals" id="totals" hidden></p>
 
   <footer class="foot">
-    <p>
-      Built for the Nimiq Mini Apps Competition.
-      <a href="https://github.com/0-robert/bump">Source on GitHub</a>, MIT licensed.
-    </p>
+    Built for the Nimiq Mini Apps Competition.
+    <a href="https://github.com/0-robert/bump">Source</a>, MIT licensed.
   </footer>
 
 </main>

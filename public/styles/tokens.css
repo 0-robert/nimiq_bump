@@ -1,71 +1,67 @@
 /*
   Design tokens.
 
-  Structure, type treatment and motion follow the Leeds MechSoc site: an inset
-  card on exposed ground, a fluid clamp() scale, and a fake-monospace ".spec"
-  register built from case and tracking rather than a shipped mono font.
+  Light, because Nimiq's own framework is: --nimiq-card-bg is white and the
+  greys are #F4F4F4 and #FAFAFA. White cards on a soft ground is what Nimiq Pay
+  looks like, so this reads as native rather than as a stranger in the wallet.
 
-  The palette is Nimiq's own, taken from @nimiq/style v0.8.5, so the app reads
-  as native inside Nimiq Pay rather than as a stranger in the wallet.
+  Numbers are the interface here. The price, the payout and the clock are the
+  only things anyone reads at a glance, so they get the display face at hero
+  sizes and everything else stays quiet.
 */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Ground and surfaces. The signature Nimiq surface is a radial gradient from
-     deep purple into navy, not a flat fill: that gradient is most of why Nimiq
-     screens look like Nimiq. */
-  --ground: #020813;
+  /* Ground and cards */
+  --ground: #eef1f7;
+  --card: #ffffff;
+  --card-soft: #f7f9fc;
+  --line: #e4e9f2;
+
+  /* Nimiq brand, straight from @nimiq/style */
+  --blue: #0582ca;
+  --blue-deep: #1f2348;
+  --blue-bright: #0ca6fe;
+  --gold: #e9b213;
+  --green: #21bca5;
+  --red: #d94432;
+  --orange: #fc8702;
+
+  /* The signature Nimiq surface: a radial gradient, never a flat fill. */
+  --hero: radial-gradient(120% 120% at bottom right, #265dd7, #0582ca);
+  --hero-hot: radial-gradient(120% 120% at bottom right, #fc8702, #d94432);
+
+  /* Text */
   --ink: #1f2348;
-  --ink-deep: #151833;
-  --card-bg: radial-gradient(120% 120% at bottom right, #260133, #1f2348);
-  --surface: #232748;
-  --surface-2: #2b2f55;
+  --ink-soft: #5a618a;
+  --ink-faint: #9aa1bd;
+  --on-hero: #ffffff;
+  --on-hero-soft: rgb(255 255 255 / 0.72);
 
-  /* Structure. Value-separated, the way the reference site handles everything. */
-  --line: #343a63;
-  --line-bright: #454b7a;
-  --muted: #8f95bb;
-  --dim: #6a7099;
-
-  --text: #f4f5fb;
-  --text-dim: #b2b9d7;
-
-  /* Signal. Each of these means exactly one thing, and nothing else uses it.
-     On-dark variants throughout: #0582CA and #D94432 are for light backgrounds
-     and go muddy here. */
-  --live: #0ca6fe;      /* the price, the primary action */
-  --gold: #e9b213;      /* the permanent winner */
-  --paid: #21bca5;      /* money arriving */
-  --urgent: #ff5c48;    /* the last 30 seconds */
-
-  --live-soft: rgb(12 166 254 / 0.12);
-  --gold-soft: rgb(233 178 19 / 0.12);
-  --paid-soft: rgb(33 188 165 / 0.14);
-  --urgent-soft: rgb(255 92 72 / 0.14);
-
-  /* Type. Archivo 800 is dense enough to want tight leading and only a little
-     negative tracking; pulling it in as hard as a lighter face would jam the
-     counters shut. */
   --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
 
-  --step--2: clamp(0.69rem, 0.67rem + 0.1vw, 0.75rem);
-  --step--1: clamp(0.81rem, 0.78rem + 0.15vw, 0.9rem);
-  --step-0: clamp(0.94rem, 0.9rem + 0.2vw, 1.05rem);
-  --step-1: clamp(1.2rem, 1.1rem + 0.5vw, 1.55rem);
-  --step-2: clamp(1.7rem, 1.4rem + 1.5vw, 2.6rem);
-  --step-3: clamp(2.4rem, 1.8rem + 3vw, 4.2rem);
+  --step--1: clamp(0.75rem, 0.72rem + 0.15vw, 0.82rem);
+  --step-0: clamp(0.94rem, 0.9rem + 0.2vw, 1.02rem);
+  --step-1: clamp(1.15rem, 1.05rem + 0.4vw, 1.4rem);
+  --step-2: clamp(1.6rem, 1.3rem + 1.4vw, 2.2rem);
+  /* Hero numbers. Big enough that the screen is readable across a room. */
+  --step-3: clamp(2.6rem, 2rem + 3vw, 3.8rem);
 
-  /* Spacing is authored per context with clamp() rather than stepped off a
-     ladder, matching the reference. */
-  --gutter: clamp(1rem, 0.7rem + 1.6vw, 1.75rem);
-  --radius-card: clamp(16px, 2vw, 26px);
-  --radius: 12px;
+  --pad: clamp(1rem, 0.8rem + 1.2vw, 1.4rem);
+  --radius-lg: 24px;
+  --radius: 16px;
+  --radius-sm: 12px;
   --radius-pill: 999px;
 
-  --dur: 420ms;
-  --dur-fast: 180ms;
-  /* Fast out, long settle. The right curve for something landing. */
-  --ease-mech: cubic-bezier(0.16, 0.84, 0.28, 1);
+  /* Soft, wide, low-opacity. One recipe, used everywhere. */
+  --lift: 0 1px 2px rgb(31 35 72 / 0.04), 0 8px 24px rgb(31 35 72 / 0.06);
+  --lift-hero: 0 2px 6px rgb(5 130 202 / 0.18), 0 18px 40px rgb(5 130 202 / 0.22);
+
+  --dur: 380ms;
+  --dur-fast: 160ms;
+  /* Fast out, long settle. Everything that moves uses this. */
+  --ease: cubic-bezier(0.16, 0.84, 0.28, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
 }

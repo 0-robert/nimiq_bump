@@ -1,15 +1,10 @@
 /**
  * The screen.
  *
- * Holds no truth of its own: every number comes from the server, and the only
- * thing computed locally is the countdown, which ticks between updates so the
- * clock stays smooth without a request per second.
+ * Holds no truth of its own: every number comes from the server. The only
+ * things computed here are the countdown, which ticks between updates so the
+ * clock stays smooth, and the heat of the flame, which is derived from them.
  */
-
-import {
-  init, call, looksLikeNimiqPay, normaliseAddress, shortAddress,
-  formatNim, formatClock,
-} from './wallet.js';
 
 // Preview mode lets the screen be explored in a normal browser, where there is
 // no wallet to connect to. Loaded only when asked for, so it costs nothing here.
@@ -17,24 +12,59 @@ if (new URLSearchParams(location.search).has('preview')) {
   await (await import('./preview.js')).install();
 }
 
+import { init, call, looksLikeNimiqPay, normaliseAddress, shortAddress, formatNim, formatClock } from './wallet.js';
+import { createFire, heatFrom } from './fire.js';
+
 const $ = (id) => document.getElementById(id);
 const el = {
-  slot: $('slot'), fill: $('slot-fill'), message: $('message'), meta: $('meta'),
-  price: $('price'), payout: $('payout'), clock: $('clock'), holder: $('holder'),
-  action: $('action'), compose: $('compose'), draft: $('draft'), count: $('count'),
-  cancel: $('cancel'), status: $('status'), past: $('past'), winners: $('winners'),
-  totals: $('totals'),
+  hero: $('hero'), fire: $('fire'), round: $('round'), badge: $('badge'),
+  message: $('message'), holder: $('holder'),
+  price: $('price'), payout: $('payout'),
+  clockCard: $('clock-card'), clock: $('clock'), drain: $('drain-bar'),
+  action: $('action'), actionLabel: $('action-label'),
+  compose: $('compose'), draft: $('draft'), count: $('count'), cancel: $('cancel'),
+  status: $('status'), past: $('past'), winners: $('winners'), totals: $('totals'),
 };
 
 const MAX_MESSAGE = 140;
+const DEFAULT_ROUND_MS = 300_000;
+
+const fire = createFire(el.fire);
 
 let provider = null;
 let address = null;
 let view = null;
-let clockOffset = 0;      // serverTime minus local clock
-let endsAt = null;        // absolute local time the round ends
-let mode = 'idle';        // idle | composing | paying | waiting
-let lastTxHash = null;
+let endsAt = null;
+let mode = 'idle';
+
+/* ---------- small animations ---------- */
+
+/** Numbers count up rather than snapping, so a rising price reads as rising. */
+function countTo(node, to) {
+  const from = Number(String(node.textContent).replace(/[^\d]/g, '')) || 0;
+  if (from === to) return;
+  node.dataset.changed = 'true';
+  setTimeout(() => delete node.dataset.changed, 440);
+
+  if (fire.reduced || Math.abs(to - from) < 2) { node.textContent = formatNim(to); return; }
+
+  const started = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - started) / 520);
+    const eased = 1 - Math.pow(1 - t, 3);
+    node.textContent = formatNim(Math.round(from + (to - from) * eased));
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function payday(amount) {
+  const toast = document.createElement('div');
+  toast.className = 'payday';
+  toast.textContent = `+${formatNim(amount)} NIM`;
+  document.body.append(toast);
+  setTimeout(() => toast.remove(), 3300);
+}
 
 /* ---------- rendering ---------- */
 
@@ -46,51 +76,48 @@ function say(text, tone = 'plain') {
 function render(next) {
   const previous = view;
   view = next;
-
-  clockOffset = next.serverTime - Date.now();
   endsAt = next.endsIn === null ? null : Date.now() + next.endsIn;
 
   const holder = next.holder;
   const mine = holder && address && normaliseAddress(holder.address) === address;
 
+  el.round.textContent = `Round ${next.round}`;
+
   if (holder) {
     el.message.textContent = holder.message;
-    el.message.classList.remove('slot-empty');
-    el.holder.textContent = mine ? 'You' : shortAddress(holder.address);
-    el.meta.innerHTML = '';
-    el.meta.append(badge(holder.settled));
+    el.holder.textContent = mine ? 'You have it' : `Held by ${shortAddress(holder.address)}`;
+    el.badge.hidden = false;
+    el.badge.textContent = holder.settled ? 'Settled' : 'Settling';
+    el.badge.title = holder.settled
+      ? 'Final. A macro block has confirmed it.'
+      : 'On chain. Waiting for the batch that makes it final.';
   } else {
     el.message.textContent = 'Nobody has it yet.';
-    el.message.classList.add('slot-empty');
-    el.holder.textContent = 'Nobody';
-    el.meta.innerHTML = '';
+    el.holder.textContent = 'Open for anyone';
+    el.badge.hidden = true;
   }
 
-  // Replay the landing animation only when the holder actually changed.
-  const changed = holder?.txHash && holder.txHash !== previous?.holder?.txHash;
-  if (changed) {
-    el.fill.dataset.justLanded = 'true';
-    setTimeout(() => delete el.fill.dataset.justLanded, 450);
-    if (previous?.holder && address && normaliseAddress(previous.holder.address) === address) {
+  // Replay the landing only when the holder actually changed hands.
+  const landed = holder?.txHash && holder.txHash !== previous?.holder?.txHash;
+  if (landed) {
+    el.hero.dataset.landed = 'true';
+    setTimeout(() => delete el.hero.dataset.landed, 650);
+    fire.flare();
+
+    const wasMine = previous?.holder && address && normaliseAddress(previous.holder.address) === address;
+    if (wasMine) {
+      payday(holder.paid);
       say(`You were bumped. ${formatNim(holder.paid)} NIM is on its way to you.`, 'paid');
     }
   }
 
-  el.price.textContent = `${formatNim(next.price)} NIM`;
-  el.payout.textContent = `${formatNim(next.payout)} NIM`;
+  countTo(el.price, next.price);
+  countTo(el.payout, next.payout);
 
   renderWinners(next.winners);
   renderTotals(next.totals);
-  tickClock();
+  tick();
   renderAction();
-}
-
-function badge(settled) {
-  const span = document.createElement('span');
-  span.className = `badge ${settled ? 'badge-settled' : 'badge-settling'}`;
-  span.textContent = settled ? 'Settled' : 'Settling';
-  if (!settled) span.title = 'Included in a block. Waiting for the batch that makes it final.';
-  return span;
 }
 
 function renderWinners(winners) {
@@ -98,60 +125,72 @@ function renderWinners(winners) {
   if (!winners?.length) return;
   el.winners.replaceChildren(...winners.map((win) => {
     const li = document.createElement('li');
-    const index = document.createElement('span');
-    index.className = 'index';
-    index.textContent = String(win.round).padStart(2, '0');
+    const rank = document.createElement('span');
+    rank.className = 'rank';
+    rank.textContent = String(win.round).padStart(2, '0');
     const message = document.createElement('span');
     message.className = 'past-message';
     message.textContent = win.message;
     const meta = document.createElement('span');
-    meta.className = 'spec past-meta';
+    meta.className = 'past-meta';
     meta.textContent = `${shortAddress(win.address)} · ${formatNim(win.paidNim)} NIM`;
-    li.append(index, message, meta);
+    li.append(rank, message, meta);
     return li;
   }));
 }
 
 function renderTotals(totals) {
-  if (!totals?.bumps) { el.totals.hidden = true; return; }
-  el.totals.hidden = false;
+  el.totals.hidden = !totals?.bumps;
+  if (!totals?.bumps) return;
   el.totals.textContent =
     `${formatNim(totals.bumps)} bumps · ${formatNim(totals.nimMoved)} NIM moved · ${formatNim(totals.wallets)} wallets`;
 }
 
-function tickClock() {
-  if (!endsAt) { el.clock.textContent = 'Not started'; el.clock.dataset.urgent = 'false'; return; }
-  const left = endsAt - Date.now();
+function tick() {
+  if (!endsAt) {
+    el.clock.textContent = 'Not started';
+    el.clockCard.dataset.urgent = 'false';
+    el.drain.style.transform = 'scaleX(1)';
+    el.hero.dataset.heat = 'cold';
+    fire.setHeat(0);
+    return;
+  }
+
+  const left = Math.max(0, endsAt - Date.now());
   el.clock.textContent = formatClock(left);
-  const urgent = left <= 30_000;
-  el.clock.dataset.urgent = String(urgent);
-  el.slot.dataset.state = left <= 0 ? 'won' : urgent ? 'urgent' : 'live';
+  el.clockCard.dataset.urgent = String(left <= 30_000);
+  const roundMs = view?.roundMs ?? DEFAULT_ROUND_MS;
+  el.drain.style.transform = `scaleX(${Math.max(0, left / roundMs)})`;
+
+  const heat = heatFrom({
+    price: view?.price ?? 100,
+    floor: view?.floor ?? 100,
+    endsIn: left,
+    roundMs,
+    holder: view?.holder,
+  });
+  fire.setHeat(heat);
+  el.hero.dataset.heat = heat > 0.55 ? 'hot' : 'cold';
 }
 
 function renderAction() {
   const button = el.action;
+  const label = el.actionLabel;
   button.disabled = false;
+  button.dataset.sheen = 'false';
 
-  if (!looksLikeNimiqPay()) {
-    button.textContent = 'Open this in Nimiq Pay';
-    button.disabled = true;
-    return;
-  }
-  if (!address) { button.textContent = 'Connect wallet'; return; }
-
-  if (mode === 'paying') { button.textContent = 'Confirm in your wallet'; button.disabled = true; return; }
-  if (mode === 'waiting') { button.textContent = 'Waiting for the chain'; button.disabled = true; return; }
+  if (!looksLikeNimiqPay()) { label.textContent = 'Open this in Nimiq Pay'; button.disabled = true; return; }
+  if (!address) { label.textContent = 'Connect wallet'; return; }
+  if (mode === 'paying') { label.textContent = 'Confirm in your wallet'; button.disabled = true; return; }
+  if (mode === 'waiting') { label.textContent = 'Waiting for the chain'; button.disabled = true; return; }
 
   const mine = view?.holder && normaliseAddress(view.holder.address) === address;
-  if (mine) { button.textContent = 'You have it'; button.disabled = true; return; }
+  if (mine) { label.textContent = 'It is yours for now'; button.disabled = true; return; }
 
-  if (view?.locked && mode !== 'composing') {
-    button.textContent = 'Someone is bumping';
-    button.disabled = true;
-    return;
-  }
+  if (view?.locked && mode !== 'composing') { label.textContent = 'Someone is bumping'; button.disabled = true; return; }
 
-  button.textContent = `Take it for ${formatNim(view?.price ?? 0)} NIM`;
+  label.textContent = `Take it for ${formatNim(view?.price ?? 0)} NIM`;
+  button.dataset.sheen = 'true';
 }
 
 /* ---------- live updates ---------- */
@@ -160,7 +199,7 @@ function renderAction() {
   Server Sent Events rather than WebSocket: WebSocket is not confirmed to work
   inside the Nimiq Pay WebView, and SSE is already running in production in
   another Mini App there. Mobile WebViews suspend when backgrounded, so the
-  client refetches state on reconnect instead of assuming the stream survived.
+  client refetches on return instead of trusting the stream survived.
 */
 function listen() {
   let stream;
@@ -168,10 +207,7 @@ function listen() {
 
   const open = () => {
     stream = new EventSource('/api/stream');
-    stream.onmessage = (event) => {
-      backoff = 1000;
-      render(JSON.parse(event.data));
-    };
+    stream.onmessage = (event) => { backoff = 1000; render(JSON.parse(event.data)); };
     stream.onerror = () => {
       stream.close();
       setTimeout(open, backoff);
@@ -180,21 +216,15 @@ function listen() {
   };
 
   open();
-
-  // Coming back from the background: resync rather than trust the stream.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     resync();
-    if (stream?.readyState === EventSource.CLOSED) open();
+    if (stream?.readyState === 2) open();
   });
 }
 
 async function resync() {
-  try {
-    render(await (await fetch('/api/state', { cache: 'no-store' })).json());
-  } catch {
-    // The stream or the next resync will catch up.
-  }
+  try { render(await (await fetch('/api/state', { cache: 'no-store' })).json()); } catch { /* the stream will catch up */ }
 }
 
 /* ---------- the bump ---------- */
@@ -202,12 +232,11 @@ async function resync() {
 async function connect() {
   try {
     provider ??= await init({ timeout: 10_000 });
-    const accounts = await call(() => provider.listAccounts());
-    address = normaliseAddress(accounts[0]);
+    address = normaliseAddress((await call(() => provider.listAccounts()))[0]);
     say('Connected. Write something and take the slot.');
     renderAction();
   } catch (error) {
-    say(error.code === 'PERMISSION_DENIED' ? 'No problem. Connect whenever you like.' : error.message, 'plain');
+    say(error.code === 'PERMISSION_DENIED' ? 'No problem. Connect whenever you like.' : error.message);
   }
 }
 
@@ -219,7 +248,7 @@ function compose() {
   renderAction();
 }
 
-function stopComposing(message = 'Rounds start at 100 NIM, which is about three cents.') {
+function stopComposing(message = 'Rounds open at 100 NIM, about three cents.') {
   mode = 'idle';
   el.compose.hidden = true;
   say(message);
@@ -248,24 +277,20 @@ async function bump() {
       body: JSON.stringify({ message, address }),
     });
     claim = await response.json();
-    if (!response.ok) {
-      stopComposing();
-      say(claim.message ?? 'That did not go through.', 'error');
-      return;
-    }
+    if (!response.ok) { stopComposing(); say(claim.message ?? 'That did not go through.', 'error'); return; }
   } catch {
     stopComposing();
     say('Could not reach the server. Try again in a moment.', 'error');
     return;
   }
 
-  say(`Confirm ${formatNim(claim.price)} NIM in your wallet. It goes straight to the holder.`, 'live');
+  say(`Confirm ${formatNim(claim.price)} NIM. It goes straight to the holder.`, 'live');
 
   try {
     // The claim token rides along as the memo in plain UTF-8. Nimiq Pay hex
     // encodes it itself, so encoding it here would put hex of hex on chain and
     // the server would never match it.
-    lastTxHash = await call(() => provider.sendBasicTransactionWithData({
+    await call(() => provider.sendBasicTransactionWithData({
       recipient: claim.recipient,
       value: claim.value,
       data: claim.token,
@@ -276,9 +301,7 @@ async function bump() {
     mode = 'composing';
     renderAction();
     say(
-      error.code === 'PERMISSION_DENIED'
-        ? 'You backed out. The slot is open again.'
-        : `That did not go through. ${error.message}`,
+      error.code === 'PERMISSION_DENIED' ? 'You backed out. The slot is open again.' : `That did not go through. ${error.message}`,
       error.code === 'PERMISSION_DENIED' ? 'plain' : 'error',
     );
     return;
@@ -292,12 +315,6 @@ async function bump() {
   countDraft();
   renderAction();
   say('Sent. Waiting for the chain to confirm it.', 'live');
-
-  setTimeout(() => {
-    if (mode !== 'waiting') return;
-    const mine = view?.holder && normaliseAddress(view.holder.address) === address;
-    if (mine) stopComposing('It is yours. Now wait for someone to take it off you.');
-  }, 2500);
 }
 
 async function release(token) {
@@ -307,9 +324,7 @@ async function release(token) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ token }),
     });
-  } catch {
-    // The claim expires on its own after a minute anyway.
-  }
+  } catch { /* the claim expires on its own after a minute */ }
 }
 
 /* ---------- wiring ---------- */
@@ -322,12 +337,10 @@ el.action.addEventListener('click', () => {
 el.cancel.addEventListener('click', () => stopComposing());
 el.draft.addEventListener('input', countDraft);
 
-// Never on load. The provider's own checklist forbids prompting before a tap,
-// and listAccounts() opens a native dialog.
+// Never on load. listAccounts() opens a native dialog and the provider's own
+// checklist forbids prompting before a deliberate tap.
 listen();
-setInterval(tickClock, 250);
-
-// Once the holder settles, drop out of the waiting state.
+setInterval(tick, 250);
 setInterval(() => {
   if (mode !== 'waiting') return;
   const mine = view?.holder && normaliseAddress(view.holder.address) === address;
