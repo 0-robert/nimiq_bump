@@ -11,6 +11,12 @@ import {
   formatNim, formatClock,
 } from './wallet.js';
 
+// Preview mode lets the screen be explored in a normal browser, where there is
+// no wallet to connect to. Loaded only when asked for, so it costs nothing here.
+if (new URLSearchParams(location.search).has('preview')) {
+  await (await import('./preview.js')).install();
+}
+
 const $ = (id) => document.getElementById(id);
 const el = {
   slot: $('slot'), fill: $('slot-fill'), message: $('message'), meta: $('meta'),
