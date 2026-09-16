@@ -1,47 +1,43 @@
 /*
   Design tokens.
 
-  Editorial, not an app chrome. The references are type-led: an enormous tight
-  grotesque doing the work, micro labels set in mono, hard rectangles, one
-  orange, and paper rather than a screen. No cards, no shadows, no rounded
-  corners, nothing that floats.
+  Modelled on the AiiD reference: a white sheet trimmed out of a dark,
+  dot-screened field, a black masthead block with one orange stripe beside it,
+  an enormous tight neo-grotesque doing the work, and micro labels set in mono.
+  Hard rectangles throughout. Nothing rounded, nothing floating, no shadows.
 
-  The one dark surface is the slot itself. That is deliberate twice over: it
-  hard-blocks against the paper the way the references block colour, and the
-  flame is additive light, so it needs somewhere dark to burn.
+  The display face is Geist rather than the Helvetica Now in the reference,
+  which is licensed and cannot ship in a public MIT repo.
 */
 
 :root {
   color-scheme: light;
 
-  --paper: #f2f0ec;
-  --paper-deep: #e8e5df;
+  --field: #0b0b0c;      /* the dark ground the sheet is trimmed from */
+  --sheet: #ffffff;
+  --sheet-2: #f1efea;
   --ink: #0b0b0c;
   --ink-soft: #55565a;
-  --ink-faint: #8e8f95;
-  --rule: #d3d0c9;
+  --ink-faint: #93949a;
+  --rule: #ddd9d2;
 
-  /* On the black slot. */
   --slot: #0b0b0c;
-  --on-slot: #f7f6f3;
-  --on-slot-faint: #8a8b90;
+  --on-slot: #ffffff;
+  --on-slot-faint: #86878c;
 
-  /* One accent. Used as flat blocks and marks, never as a gradient. */
   --orange: #ff4d17;
   --up: #12805f;
 
-  --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Geist', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 
-  --micro: 10px;
+  --micro: 9.5px;
   --small: 12px;
-  --base: 14px;
-  /* The hero numerals and the message. Deliberately oversized. */
-  --figure: clamp(2.9rem, 2rem + 4.4vw, 4.4rem);
-  --message: clamp(1.9rem, 1.4rem + 2.4vw, 2.9rem);
+  --base: 13.5px;
+  --figure: clamp(2.7rem, 1.9rem + 4vw, 4rem);
+  --message: clamp(1.75rem, 1.3rem + 2.2vw, 2.6rem);
 
-  --gap: 14px;
-  --dur: 340ms;
+  --dur: 320ms;
   --ease: cubic-bezier(0.16, 0.84, 0.28, 1);
 }

@@ -106,9 +106,9 @@ export function install() {
   const banner = document.createElement('p');
   banner.className = 'status';
   banner.dataset.tone = 'live';
-  banner.style.marginBottom = '1rem';
   banner.textContent = 'Preview. A stand-in wallet, no real NIM, nothing sent to the chain.';
-  document.querySelector('.wrap').prepend(banner);
+  // Falls back to the body so renaming the page wrapper cannot break preview.
+  (document.querySelector('.sheet') ?? document.body).prepend(banner);
 
   globalThis.nimiqPay = { language: 'en' };
   globalThis.nimiq = {

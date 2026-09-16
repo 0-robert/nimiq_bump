@@ -91,7 +91,7 @@ function render(next) {
       ? 'You have it'
       : `Held by ${holder.name || shortAddress(holder.address)}`;
     el.state.hidden = false;
-    el.state.dataset.settled = String(holder.settled);
+    el.state.className = holder.settled ? 'tag tag-live' : 'tag tag-ghost';
     el.state.textContent = holder.settled ? 'Settled' : 'Settling';
     el.state.title = holder.settled
       ? 'Final. A macro block has confirmed it.'
@@ -145,11 +145,13 @@ function renderWinners(winners) {
   }));
 }
 
+const plural = (n, one) => `${formatNim(n)} ${n === 1 ? one : `${one}s`}`;
+
 function renderTotals(totals) {
-  el.totals.hidden = !totals?.bumps;
-  if (!totals?.bumps) return;
-  el.totals.textContent =
-    `${formatNim(totals.bumps)} bumps · ${formatNim(totals.nimMoved)} NIM moved · ${formatNim(totals.wallets)} wallets`;
+  // Shares the footer line, so it always says something rather than vanishing.
+  el.totals.textContent = totals?.bumps
+    ? `${plural(totals.bumps, 'bump')} · ${formatNim(totals.nimMoved)} NIM · ${plural(totals.wallets, 'wallet')}`
+    : 'Nimiq Mini Apps Competition';
 }
 
 function tick() {

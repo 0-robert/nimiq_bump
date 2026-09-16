@@ -5,26 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BUMP</title>
 <meta name="description" content="One slot, shared by everyone. Take it by paying 1.5x, and the holder you took it from gets the money.">
-<meta name="theme-color" content="#f2f0ec">
+<meta name="theme-color" content="#0b0b0c">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="preload" href="/fonts/archivo-900.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/geist-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/mono-500.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/app.css">
 </head>
 <body>
-<main class="wrap">
+<main class="sheet">
 
   <header class="masthead">
-    <h1 class="wordmark">BUMP</h1>
+    <h1 class="mark">BUMP</h1>
+    <span class="stripe" aria-hidden="true"></span>
     <span class="stamp" id="stamp" data-urgent="false">Day 1 / Closes <b id="clock">&mdash;</b></span>
   </header>
 
-  <!-- One hard black block on the paper. The flame burns along its base. -->
   <section class="slot" id="slot">
     <canvas class="slot-fire" id="fire" aria-hidden="true"></canvas>
     <div class="slot-head">
-      <span class="lbl">On the slot</span>
-      <span class="state" id="state" data-settled="false" hidden>Settling</span>
+      <span class="tag">On the slot</span>
+      <span class="tag tag-ghost" id="state" hidden>Settling</span>
     </div>
     <p class="slot-message" id="message">Nobody has it yet</p>
     <p class="slot-holder" id="holder">Open to anyone</p>
@@ -60,6 +60,21 @@
 
   <p class="status" id="status" data-tone="plain">The day opens at 100 NIM, about three cents.</p>
 
+  <!-- The arithmetic, not an explanation of it. -->
+  <section class="works">
+    <span class="lbl">How it works</span>
+    <ol>
+      <li data-accent="in"><span>Bob takes the slot</span><span class="v">100</span></li>
+      <li data-accent="in"><span>Alice takes it off Bob</span><span class="v">150</span></li>
+      <li data-accent="up"><span>Bob walks away with</span><span class="v">+50</span></li>
+      <li data-accent="top"><span>Alice is on the slot now</span><span class="v">&rarr;</span></li>
+    </ol>
+    <p class="note">
+      Hold it when the day closes and your message stays up for good. Everyone
+      who lost it already got paid.
+    </p>
+  </section>
+
   <section class="block tape" id="tape" hidden>
     <span class="lbl">Today</span>
     <ul id="events"></ul>
@@ -70,39 +85,9 @@
     <ul id="winners"></ul>
   </section>
 
-  <section class="how">
-    <p>
-      Pay 1.5x and the slot is yours. That money goes straight to whoever you
-      took it from, so they walk away with 50% more than they put in.
-    </p>
-    <p>
-      Hold it when the day closes and your message stays up for good. Everyone
-      else already got paid.
-    </p>
-    <details>
-      <summary>The rest of it</summary>
-      <p>
-        The day closes at 19:00 UTC. Taking the slot in the last two minutes
-        pushes the close out by two, so it cannot be won by turning up a second
-        before the end.
-      </p>
-      <p>
-        Nothing is held in the middle. Your wallet pays the holder directly, and
-        the slot changes hands once the payment is on chain.
-      </p>
-      <p>
-        Nothing here is drawn, rolled or randomised. The price is on screen
-        before you commit and after. You are buying one advertising slot at a
-        published price from someone who profits on the sale.
-      </p>
-    </details>
-  </section>
-
-  <p class="totals" id="totals" hidden></p>
-
   <p class="foot">
-    Nimiq Mini Apps Competition &middot;
-    <a href="https://github.com/0-robert/bump">Source</a> &middot; MIT
+    <span id="totals">Nimiq Mini Apps Competition</span>
+    <a href="https://github.com/0-robert/bump">Source &middot; MIT</a>
   </p>
 
 </main>
