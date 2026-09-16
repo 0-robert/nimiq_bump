@@ -17,17 +17,18 @@ import { createFire, heatFrom } from './fire.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
-  hero: $('hero'), fire: $('fire'), round: $('round'), badge: $('badge'),
+  slot: $('slot'), fire: $('fire'), day: $('day'), badge: $('badge'),
   message: $('message'), holder: $('holder'),
   price: $('price'), payout: $('payout'),
-  clockCard: $('clock-card'), clock: $('clock'), drain: $('drain-bar'),
+  figClose: $('fig-close'), clock: $('clock'),
   action: $('action'), actionLabel: $('action-label'),
-  compose: $('compose'), draft: $('draft'), count: $('count'), cancel: $('cancel'),
-  status: $('status'), past: $('past'), winners: $('winners'), totals: $('totals'),
+  compose: $('compose'), draft: $('draft'), name: $('name'), count: $('count'), cancel: $('cancel'),
+  status: $('status'), tape: $('tape'), events: $('events'),
+  past: $('past'), winners: $('winners'), totals: $('totals'),
 };
 
 const MAX_MESSAGE = 140;
-const DEFAULT_ROUND_MS = 300_000;
+const DAY_MS = 86_400_000;
 
 const fire = createFire(el.fire);
 
@@ -41,6 +42,7 @@ let mode = 'idle';
 
 /** Numbers count up rather than snapping, so a rising price reads as rising. */
 function countTo(node, to) {
+  // `data-changed` lives on the <b>, which is what the animation targets.
   const from = Number(String(node.textContent).replace(/[^\d]/g, '')) || 0;
   if (from === to) return;
   node.dataset.changed = 'true';
@@ -81,12 +83,15 @@ function render(next) {
   const holder = next.holder;
   const mine = holder && address && normaliseAddress(holder.address) === address;
 
-  el.round.textContent = `Round ${next.round}`;
+  el.day.textContent = `Day ${next.round}`;
 
   if (holder) {
     el.message.textContent = holder.message;
-    el.holder.textContent = mine ? 'You have it' : `Held by ${shortAddress(holder.address)}`;
+    el.holder.textContent = mine
+      ? 'You have it'
+      : `Held by ${holder.name || shortAddress(holder.address)}`;
     el.badge.hidden = false;
+    el.badge.dataset.settled = String(holder.settled);
     el.badge.textContent = holder.settled ? 'Settled' : 'Settling';
     el.badge.title = holder.settled
       ? 'Final. A macro block has confirmed it.'
@@ -100,8 +105,8 @@ function render(next) {
   // Replay the landing only when the holder actually changed hands.
   const landed = holder?.txHash && holder.txHash !== previous?.holder?.txHash;
   if (landed) {
-    el.hero.dataset.landed = 'true';
-    setTimeout(() => delete el.hero.dataset.landed, 650);
+    el.slot.dataset.landed = 'true';
+    setTimeout(() => delete el.slot.dataset.landed, 600);
     fire.flare();
 
     const wasMine = previous?.holder && address && normaliseAddress(previous.holder.address) === address;
@@ -114,6 +119,7 @@ function render(next) {
   countTo(el.price, next.price);
   countTo(el.payout, next.payout);
 
+  renderTape(next.events, previous?.events);
   renderWinners(next.winners);
   renderTotals(next.totals);
   tick();
@@ -125,16 +131,16 @@ function renderWinners(winners) {
   if (!winners?.length) return;
   el.winners.replaceChildren(...winners.map((win) => {
     const li = document.createElement('li');
-    const rank = document.createElement('span');
-    rank.className = 'rank';
-    rank.textContent = String(win.round).padStart(2, '0');
+    const n = document.createElement('span');
+    n.className = 'n';
+    n.textContent = String(win.round).padStart(2, '0');
     const message = document.createElement('span');
-    message.className = 'past-message';
+    message.className = 'm';
     message.textContent = win.message;
     const meta = document.createElement('span');
-    meta.className = 'past-meta';
-    meta.textContent = `${shortAddress(win.address)} · ${formatNim(win.paidNim)} NIM`;
-    li.append(rank, message, meta);
+    meta.className = 'meta';
+    meta.textContent = `${win.name || shortAddress(win.address)} · ${formatNim(win.paidNim)} NIM`;
+    li.append(n, message, meta);
     return li;
   }));
 }
@@ -148,29 +154,66 @@ function renderTotals(totals) {
 
 function tick() {
   if (!endsAt) {
-    el.clock.textContent = 'Not started';
-    el.clockCard.dataset.urgent = 'false';
-    el.drain.style.transform = 'scaleX(1)';
-    el.hero.dataset.heat = 'cold';
+    el.clock.textContent = '\u2014';
+    el.figClose.dataset.urgent = 'false';
+    el.day.dataset.urgent = 'false';
     fire.setHeat(0);
     return;
   }
 
   const left = Math.max(0, endsAt - Date.now());
   el.clock.textContent = formatClock(left);
-  el.clockCard.dataset.urgent = String(left <= 30_000);
-  const roundMs = view?.roundMs ?? DEFAULT_ROUND_MS;
-  el.drain.style.transform = `scaleX(${Math.max(0, left / roundMs)})`;
 
-  const heat = heatFrom({
+  // The last ten minutes of the day are where it gets decided.
+  const closing = left <= 600_000;
+  el.figClose.dataset.urgent = String(closing);
+  el.day.dataset.urgent = String(closing);
+
+  fire.setHeat(heatFrom({
     price: view?.price ?? 100,
     floor: view?.floor ?? 100,
     endsIn: left,
-    roundMs,
+    roundMs: DAY_MS,
     holder: view?.holder,
-  });
-  fire.setHeat(heat);
-  el.hero.dataset.heat = heat > 0.55 ? 'hot' : 'cold';
+  }));
+}
+
+/** The tape: who took it from whom, and what it paid. */
+function renderTape(events, previous) {
+  el.tape.hidden = !events?.length;
+  if (!events?.length) return;
+
+  const seen = new Set((previous ?? []).map((e) => `${e.at}:${e.actor}`));
+  el.events.replaceChildren(...events.map((event) => {
+    const li = document.createElement('li');
+    li.dataset.kind = event.kind;
+    if (previous && !seen.has(`${event.at}:${event.actor}`)) li.dataset.fresh = 'true';
+
+    const time = document.createElement('span');
+    time.className = 't';
+    time.textContent = new Date(event.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+    const what = document.createElement('span');
+    what.className = 'what';
+    const actor = who(event.actorName, event.actor);
+    what.textContent =
+      event.kind === 'won' ? `${actor} kept day ${event.day}`
+      : event.kind === 'open' ? `${actor} opened the day`
+      : `${actor} took it from ${who(event.fromName, event.from)}`;
+
+    const amount = document.createElement('span');
+    amount.className = 'amt';
+    amount.textContent = event.kind === 'take' ? `+${formatNim(event.amount)}` : formatNim(event.amount);
+
+    li.append(time, what, amount);
+    return li;
+  }));
+}
+
+/** A chosen name if there is one, otherwise enough of the address to follow along. */
+function who(name, address) {
+  if (name) return name;
+  return address ? normaliseAddress(address).slice(0, 6) : 'someone';
 }
 
 function renderAction() {
@@ -243,6 +286,8 @@ async function connect() {
 function compose() {
   mode = 'composing';
   el.compose.hidden = false;
+  // Remembered per device so nobody retypes it every day. Local only.
+  try { el.name.value ||= localStorage.getItem('bump.name') ?? ''; } catch { /* private mode */ }
   el.draft.focus();
   countDraft();
   renderAction();
@@ -274,7 +319,7 @@ async function bump() {
     const response = await fetch('/api/claim', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ message, address }),
+      body: JSON.stringify({ message, address, name: el.name.value.trim() }),
     });
     claim = await response.json();
     if (!response.ok) { stopComposing(); say(claim.message ?? 'That did not go through.', 'error'); return; }
@@ -283,6 +328,8 @@ async function bump() {
     say('Could not reach the server. Try again in a moment.', 'error');
     return;
   }
+
+  try { localStorage.setItem('bump.name', el.name.value.trim()); } catch { /* private mode */ }
 
   say(`Confirm ${formatNim(claim.price)} NIM. It goes straight to the holder.`, 'live');
 

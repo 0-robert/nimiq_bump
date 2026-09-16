@@ -5,25 +5,27 @@
 One message slot, shared by everyone in the app. Take it by paying 1.5x what the
 current holder paid. That payment goes straight to the person you took it from,
 so getting beaten is the outcome you want. The only person out of pocket is
-whoever is still holding when the clock runs out, and they keep their message in
-the hall of fame for good.
+whoever is holding when the day closes, and they keep their message in the hall
+of fame for good. One winner a day.
 
 A Mini App for [Nimiq Pay](https://nimiq.com).
 
 ## How a round works
 
-The slot opens at a floor of 100 NIM. Each bump costs 1.5x the last price and
-resets a five minute clock. When the clock expires, the round ends and the price
-drops back to the floor.
+The slot opens at a floor of 100 NIM and each bump costs 1.5x the last price.
+The day closes at 19:00 UTC, when whoever is holding keeps their message and the
+price drops back to the floor for tomorrow. Taking the slot inside the final two
+minutes pushes the close out by two, so the day cannot be won by turning up a
+second before the end.
 
 | | Pays | To | Receives | Net |
 |---|---|---|---|---|
 | Aoife | 100 | previous winner | 150 from Ben | +50 |
 | Ben | 150 | Aoife | 225 from Cal | +75 |
-| Cal | 225 | Ben | 100 from the next round's opening bid | -125, keeps the slot |
+| Cal | 225 | Ben | 100 from tomorrow's opening bid | -125, keeps the slot |
 
 Everyone who loses the slot walks away with 50% more than they put in. Cal pays
-for permanence. The opening bid of every round goes to the winner of the round
+for permanence. The opening bid of every day goes to the winner of the day
 before it.
 
 ## No chance element
@@ -76,10 +78,10 @@ platform, so the race is gone rather than guarded against.
 
 ```
 src/worker.ts    router, static assets, SSE stream
-src/slot.ts      the Durable Object: state, claims, clock, rounds
+src/slot.ts      the Durable Object: state, claims, the daily close, the tape
 src/verify.ts    chain polling and the checks above
-src/moderate.ts  message screening before any payment is requested
-src/nimiq.ts     Luna maths, address handling, provider error unwrapping
+src/moderate.ts  message and name screening before any payment is requested
+src/nimiq.ts     Luna maths, addresses, name sanitising, provider error unwrapping
 ```
 
 Live updates go over Server Sent Events rather than WebSocket. WebSocket is not

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BUMP</title>
 <meta name="description" content="One slot, shared by everyone. Take it by paying 1.5x, and the holder you took it from gets the money.">
-<meta name="theme-color" content="#eef1f7">
+<meta name="theme-color" content="#0a0c10">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/archivo-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
@@ -16,45 +16,39 @@
 
   <header class="masthead">
     <h1 class="wordmark">BUMP</h1>
-    <p class="motto">The loser cashes out.</p>
+    <span class="day num" id="day" data-urgent="false">Day 1</span>
   </header>
 
-  <!-- The hero. The flame behind it is driven by how hot the round is. -->
-  <section class="hero" id="hero" data-heat="cold">
-    <canvas class="hero-fire" id="fire" aria-hidden="true"></canvas>
-    <div class="hero-body">
-      <div class="hero-top">
-        <span class="tag" id="round">Round 1</span>
-        <span class="tag tag-quiet" id="badge" hidden></span>
-      </div>
-      <p class="hero-message" id="message">Nobody has it yet.</p>
-      <p class="hero-holder" id="holder">Open for anyone</p>
+  <!-- The flame behind this is driven by how hot the day has got. -->
+  <section class="slot" id="slot">
+    <canvas class="slot-fire" id="fire" aria-hidden="true"></canvas>
+    <div class="slot-head">
+      <span class="lbl">On the slot</span>
+      <span class="badge" id="badge" data-settled="false" hidden>Settling</span>
     </div>
+    <p class="slot-message" id="message">Nobody has it yet.</p>
+    <p class="slot-holder" id="holder">Open for anyone</p>
   </section>
 
-  <section class="stats" aria-label="This round">
-    <article class="stat stat-live">
-      <span class="stat-label">Price</span>
-      <strong class="stat-value num" id="price">100</strong>
-      <span class="stat-unit">NIM to take it</span>
-    </article>
-    <article class="stat">
-      <span class="stat-label">They get</span>
-      <strong class="stat-value num" id="payout">150</strong>
-      <span class="stat-unit">paid to the holder</span>
-    </article>
-  </section>
-
-  <section class="clock-card" id="clock-card">
-    <div class="clock-head">
-      <span class="stat-label">Time left</span>
-      <strong class="clock num" id="clock">Not started</strong>
+  <div class="figs">
+    <div class="fig fig-price">
+      <span class="lbl">Price</span>
+      <b class="num" id="price">100</b>
     </div>
-    <div class="drain" aria-hidden="true"><i id="drain-bar"></i></div>
-  </section>
+    <div class="fig fig-payout">
+      <span class="lbl">They get</span>
+      <b class="num" id="payout">150</b>
+    </div>
+    <div class="fig fig-close" id="fig-close" data-urgent="false">
+      <span class="lbl">Closes</span>
+      <b class="num" id="clock">&mdash;</b>
+    </div>
+  </div>
 
   <div class="actions">
     <div class="compose" id="compose" hidden>
+      <input id="name" type="text" maxlength="16" autocomplete="nickname"
+        spellcheck="false" placeholder="Your name (optional)" aria-label="Your name">
       <textarea id="draft" maxlength="140" rows="3"
         placeholder="Say something. Everyone in the app sees it."
         aria-label="Your message"></textarea>
@@ -68,28 +62,33 @@
     </button>
   </div>
 
-  <p class="status" id="status" data-tone="plain">Rounds open at 100 NIM, about three cents.</p>
+  <p class="status" id="status" data-tone="plain">The day opens at 100 NIM, about three cents.</p>
+
+  <section class="tape" id="tape" hidden>
+    <h2>Tape</h2>
+    <ul id="events"></ul>
+  </section>
 
   <section class="past" id="past" hidden>
     <h2>Kept for good</h2>
-    <ol id="winners"></ol>
+    <ul id="winners"></ul>
   </section>
 
   <section class="how">
-    <p class="how-lead">
+    <p>
       Pay 1.5x and the slot is yours. That money goes straight to whoever you
       took it from, so they walk away with 50% more than they put in.
     </p>
-    <p class="how-lead">
-      Hold it when the clock hits zero and your message stays up for good.
-      Everyone else already got paid.
+    <p>
+      Hold it when the day closes and your message stays up for good. Everyone
+      else already got paid.
     </p>
     <details>
       <summary>The rest of it</summary>
       <p>
-        Every bump puts five minutes back on the clock. When it runs out the
-        price drops to 100 NIM and the next round opens. The opening bid of each
-        round goes to whoever won the one before.
+        The day closes at 19:00 UTC. Taking the slot in the last two minutes
+        pushes the close out by two, so it cannot be won by turning up a second
+        before the end.
       </p>
       <p>
         Nothing is held in the middle. Your wallet pays the holder directly, and

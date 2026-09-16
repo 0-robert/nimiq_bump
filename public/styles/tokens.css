@@ -1,67 +1,48 @@
 /*
   Design tokens.
 
-  Light, because Nimiq's own framework is: --nimiq-card-bg is white and the
-  greys are #F4F4F4 and #FAFAFA. White cards on a soft ground is what Nimiq Pay
-  looks like, so this reads as native rather than as a stranger in the wallet.
-
-  Numbers are the interface here. The price, the payout and the clock are the
-  only things anyone reads at a glance, so they get the display face at hero
-  sizes and everything else stays quiet.
+  A trading desk, not a card layout. Hairline borders instead of shadows,
+  corners just soft enough not to be sharp, and figures doing the talking.
+  Dark for two reasons: the flame is additive light and disappears on white,
+  and money in motion reads better against it.
 */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Ground and cards */
-  --ground: #eef1f7;
-  --card: #ffffff;
-  --card-soft: #f7f9fc;
-  --line: #e4e9f2;
+  --ground: #0a0c10;
+  --panel: #11151e;
+  --panel-2: #161b27;
+  --line: #23283a;
+  --line-soft: #171c28;
 
-  /* Nimiq brand, straight from @nimiq/style */
-  --blue: #0582ca;
-  --blue-deep: #1f2348;
-  --blue-bright: #0ca6fe;
-  --gold: #e9b213;
-  --green: #21bca5;
-  --red: #d94432;
-  --orange: #fc8702;
+  --text: #e8eaf0;
+  --text-dim: #9aa2bc;
+  --text-faint: #69718c;
+  --text-ghost: #525a75;
 
-  /* The signature Nimiq surface: a radial gradient, never a flat fill. */
-  --hero: radial-gradient(120% 120% at bottom right, #265dd7, #0582ca);
-  --hero-hot: radial-gradient(120% 120% at bottom right, #fc8702, #d94432);
-
-  /* Text */
-  --ink: #1f2348;
-  --ink-soft: #5a618a;
-  --ink-faint: #9aa1bd;
-  --on-hero: #ffffff;
-  --on-hero-soft: rgb(255 255 255 / 0.72);
+  /* Each one means exactly one thing and nothing else uses it. */
+  --blue: #31b3ff;      /* the price, the primary action */
+  --up: #2fd6a6;        /* money arriving */
+  --hot: #ff5c48;       /* the close, once it is near */
+  --gold: #f0b323;      /* a day already won */
 
   --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
 
-  --step--1: clamp(0.75rem, 0.72rem + 0.15vw, 0.82rem);
-  --step-0: clamp(0.94rem, 0.9rem + 0.2vw, 1.02rem);
-  --step-1: clamp(1.15rem, 1.05rem + 0.4vw, 1.4rem);
-  --step-2: clamp(1.6rem, 1.3rem + 1.4vw, 2.2rem);
-  /* Hero numbers. Big enough that the screen is readable across a room. */
-  --step-3: clamp(2.6rem, 2rem + 3vw, 3.8rem);
+  --step--2: 10px;
+  --step--1: 12px;
+  --step-0: 14px;
+  --step-1: clamp(1rem, 0.95rem + 0.3vw, 1.2rem);
+  --step-2: clamp(1.55rem, 1.3rem + 1.2vw, 2.1rem);
+  --step-3: clamp(1.6rem, 1.35rem + 1.3vw, 2.2rem);
 
-  --pad: clamp(1rem, 0.8rem + 1.2vw, 1.4rem);
-  --radius-lg: 24px;
-  --radius: 16px;
-  --radius-sm: 12px;
-  --radius-pill: 999px;
+  --pad: 14px;
+  --radius: 4px;
+  --radius-sm: 3px;
 
-  /* Soft, wide, low-opacity. One recipe, used everywhere. */
-  --lift: 0 1px 2px rgb(31 35 72 / 0.04), 0 8px 24px rgb(31 35 72 / 0.06);
-  --lift-hero: 0 2px 6px rgb(5 130 202 / 0.18), 0 18px 40px rgb(5 130 202 / 0.22);
-
-  --dur: 380ms;
-  --dur-fast: 160ms;
-  /* Fast out, long settle. Everything that moves uses this. */
+  --dur: 360ms;
+  --dur-fast: 150ms;
   --ease: cubic-bezier(0.16, 0.84, 0.28, 1);
-  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-back: cubic-bezier(0.34, 1.4, 0.64, 1);
 }

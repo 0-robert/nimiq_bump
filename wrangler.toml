@@ -21,7 +21,7 @@ binding = "AI"
 NETWORK_ID = "24"
 RPC_URL = "https://rpc.nimiqwatch.com"
 FLOOR_NIM = "100"
-ROUND_SECONDS = "300"
+CLOSE_HOUR_UTC = "19"
 CLAIM_SECONDS = "60"
 # Receives the opening bid of round 1 only. Every later round pays the previous winner.
 GENESIS_ADDRESS = "NQ07 0000 0000 0000 0000 0000 0000 0000 0000"

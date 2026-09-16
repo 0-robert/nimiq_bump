@@ -59,4 +59,8 @@ test('display helpers', () => {
   assert.equal(formatClock(300_000), '5:00');
   assert.equal(formatClock(61_000), '1:01');
   assert.equal(formatClock(-5), '0:00');
+  // Hours show up only when there are any, so the close reads 4:07:22 then 7:22.
+  assert.equal(formatClock(14_842_000), '4:07:22');
+  assert.equal(formatClock(3_600_000), '1:00:00');
+  assert.equal(formatClock(3_599_000), '59:59');
 });

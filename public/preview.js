@@ -16,13 +16,24 @@ const ME = 'NQ55 PREV 1EWW ALLE T0NL Y0000 0000 0000'.replace(/\s+/g, '').slice(
 const RIVAL = 'NQ31 R1VA L0000 0000 0000 0000 0000 0000'.replace(/\s+/g, '').slice(0, 36);
 
 const FLOOR = 100;
-const ROUND_MS = 60_000;   // shortened from five minutes so the loop is watchable
+/** A real day closes at 19:00 UTC. Ninety seconds here so a close is watchable. */
+const DAY_MS = 90_000;
 const next = (n) => Math.ceil((n * 3) / 2);
 
 const slot = {
-  round: 1, price: FLOOR, holder: null, endsAt: null,
-  winners: [], totals: { bumps: 0, nimMoved: 0, wallets: new Set() },
+  round: 12, price: FLOOR, holder: null, closesAt: Date.now() + DAY_MS,
+  winners: [
+    { round: 11, address: 'NQ07AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHH', name: 'sam', message: 'happy birthday nan', paidNim: 1142, wonAt: Date.now() - 86_400_000, txHash: 'b'.repeat(64) },
+    { round: 10, address: 'NQ11ZZZZYYYYXXXXWWWWVVVVUUUUTTTTSSSS', name: 'aoife', message: 'we shipped it', paidNim: 507, wonAt: Date.now() - 172_800_000, txHash: 'c'.repeat(64) },
+  ],
+  events: [],
+  totals: { bumps: 0, nimMoved: 0, wallets: new Set() },
 };
+
+function record(kind, actor, actorName, from, fromName, amount) {
+  slot.events.unshift({ at: Date.now(), kind, day: slot.round, actor, actorName, from, fromName, amount });
+  slot.events = slot.events.slice(0, 20);
+}
 
 const listeners = new Set();
 
@@ -32,22 +43,28 @@ function view() {
     price: slot.price,
     payout: next(slot.price),
     holder: slot.holder,
-    endsIn: slot.endsAt ? Math.max(0, slot.endsAt - Date.now()) : null,
+    endsIn: Math.max(0, slot.closesAt - Date.now()),
+    closesAt: slot.closesAt,
+    events: slot.events.slice(0, 20),
     locked: false,
     lockedFor: 0,
     winners: slot.winners.slice(0, 12),
     totals: { ...slot.totals, wallets: slot.totals.wallets.size },
     floor: FLOOR,
-    roundMs: ROUND_MS,
     serverTime: Date.now(),
   };
 }
 
 const push = () => listeners.forEach((fn) => fn(view()));
 
-function take(address, message) {
+function take(address, message, who = '') {
+  const previous = slot.holder;
+  const name = globalThis.__previewName ?? '';
+  record(previous ? 'take' : 'open', address, address === ME ? name : 'rival',
+    previous ? previous.address : null, previous ? previous.name : null, slot.price);
+  if (slot.closesAt - Date.now() < 15_000) slot.closesAt = Date.now() + 15_000;   // anti-snipe
   slot.holder = {
-    address, message, paid: slot.price,
+    address, name: address === ME ? (globalThis.__previewName ?? '') : 'rival', message, paid: slot.price,
     takenAt: Date.now(), txHash: Math.random().toString(16).slice(2).padEnd(64, '0'),
     settled: false,
   };
@@ -55,29 +72,28 @@ function take(address, message) {
   slot.totals.nimMoved += slot.price;
   slot.totals.wallets.add(address);
   slot.price = next(slot.price);
-  slot.endsAt = Date.now() + ROUND_MS;
   push();
 
   // Stand in for the wait between inclusion and the macro block that finalises it.
   setTimeout(() => { if (slot.holder) { slot.holder.settled = true; push(); } }, 2200);
 }
 
-function closeRound() {
-  if (!slot.holder) return;
-  slot.winners.unshift({
-    round: slot.round, address: slot.holder.address, message: slot.holder.message,
-    paidNim: slot.holder.paid, wonAt: Date.now(), txHash: slot.holder.txHash,
-  });
+function closeDay() {
+  if (slot.holder) {
+    slot.winners.unshift({
+      round: slot.round, address: slot.holder.address, name: slot.holder.name, message: slot.holder.message,
+      paidNim: slot.holder.paid, wonAt: Date.now(), txHash: slot.holder.txHash,
+    });
+    record('won', slot.holder.address, slot.holder.name, null, null, slot.holder.paid);
+  }
   slot.round += 1;
   slot.price = FLOOR;
   slot.holder = null;
-  slot.endsAt = null;
+  slot.closesAt = Date.now() + DAY_MS;
   push();
 }
 
-setInterval(() => {
-  if (slot.endsAt && Date.now() >= slot.endsAt) closeRound();
-}, 500);
+setInterval(() => { if (Date.now() >= slot.closesAt) closeDay(); }, 500);
 
 /** Someone takes it back off you, so the payout moment is part of the demo. */
 function scheduleRival() {
@@ -116,6 +132,7 @@ export function install() {
     if (url.includes('/api/claim')) {
       const body = JSON.parse(init?.body ?? '{}');
       globalThis.__previewClaim = { token: 'preview', message: body.message };
+      globalThis.__previewName = body.name ?? '';
       return Response.json({ token: 'preview', recipient: RIVAL, value: slot.price * 100_000, price: slot.price, expiresIn: 60_000 });
     }
     return realFetch(input, init);

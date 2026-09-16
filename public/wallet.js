@@ -101,7 +101,12 @@ export function formatNim(nim) {
   return Number(nim).toLocaleString('en-GB');
 }
 
+/** Hours appear only once there are any, so the close reads 4:07:22 then 7:22. */
 export function formatClock(ms) {
   const total = Math.max(0, Math.ceil(ms / 1000));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
 }

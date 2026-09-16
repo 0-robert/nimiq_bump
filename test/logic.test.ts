@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   nextPrice, payout, nimToLuna, normaliseAddress, addressesMatch,
-  shortAddress, unwrap, toWalletError, hexToUtf8, WalletError,
+  shortAddress, unwrap, toWalletError, hexToUtf8, WalletError, sanitiseName,
 } from '../src/nimiq.ts';
 import { checkTx, isFinal } from '../src/verify.ts';
 
@@ -120,4 +120,30 @@ test('finality needs a full batch, not just depth', () => {
   assert.ok(!isFinal({ ...good, confirmations: 59 }, 158));
   // Depth is taken from whichever source is further along.
   assert.ok(isFinal({ ...good, confirmations: 0 }, 200));
+});
+
+
+test('names are trimmed, collapsed and capped', () => {
+  assert.equal(sanitiseName('  rob   vassallo  '), 'rob vassallo');
+  assert.equal(sanitiseName('a'.repeat(40)), 'a'.repeat(16));
+});
+
+test('names cannot carry invisible or direction-flipping characters', () => {
+  assert.equal(sanitiseName('ro\u200bb'), 'rob');
+  assert.equal(sanitiseName('\u202ereversed'), 'reversed');
+  assert.equal(sanitiseName('\u0000\u0007'), '');
+  assert.equal(sanitiseName('   '), '');
+});
+
+test('a name cannot impersonate a wallet address', () => {
+  assert.equal(sanitiseName('NQ22 JV9P 548B JL00 TRKS'), '');
+  assert.equal(sanitiseName('nq22jv9p548bjl00trks'), '');
+  // An ordinary word that merely starts with those letters is fine.
+  assert.equal(sanitiseName('NQuick'), 'NQuick');
+});
+
+test('a capped name never splits a multi-byte character', () => {
+  const name = sanitiseName('\u{1f525}'.repeat(20));
+  assert.equal([...name].length, 16);
+  assert.ok(!name.includes('\ufffd'));
 });

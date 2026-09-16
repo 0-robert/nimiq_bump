@@ -135,3 +135,32 @@ export const CLAIM_TOKEN_BYTES = 8;
 export function formatNim(nim: number): string {
   return nim.toLocaleString('en-GB');
 }
+
+
+export const MAX_NAME_LENGTH = 16;
+
+/**
+ * Clean up a display name.
+ *
+ * Names sit next to money in a public feed, so the rules are deliberately mean:
+ * no invisible characters, no direction overrides, no impersonating a wallet
+ * address, and a hard length cap so nobody can push the tape around.
+ *
+ * Returns an empty string when nothing usable survives, and the caller falls
+ * back to a shortened address.
+ */
+export function sanitiseName(input: string): string {
+  const stripped = String(input ?? '')
+    // Control characters, zero width joiners and spaces, and the bidi overrides
+    // that let a name render as something other than what it contains.
+    .replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!stripped) return '';
+  // An address-shaped name would let someone pose as another wallet in the tape.
+  if (/^NQ[0-9A-Z\s]{10,}$/i.test(stripped)) return '';
+
+  // Spread first: slicing a string by code unit would cut an emoji in half.
+  return [...stripped].slice(0, MAX_NAME_LENGTH).join('').trim();
+}

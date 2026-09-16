@@ -1,100 +1,142 @@
 /**
- * The slot catches fire as the round heats up.
+ * The slot catches fire as the day heats up.
  *
- * Canvas 2D, no dependency, no WebGL. A WebGL flame would mean shipping a
- * renderer into a WebView that is scored on how fast it loads, and WebGL
- * support inside mobile WebViews is patchy enough that a dead canvas was not
- * worth the risk.
+ * Heat diffusion on a low resolution buffer, the way fire was done before
+ * shaders: seed the bottom row hot, and every cell above takes the cell below
+ * it minus a little randomness, drifting sideways as it cools. Scaled up with
+ * smoothing, that gives rising tongues that actually behave like flame.
  *
- * The flame is not decoration. Its height and colour are driven by how hot the
- * round is, so a bidding war is visible before anyone reads a number.
+ * The first attempt used soft radial particles and read as floating blobs,
+ * because a flame is a continuous field, not a crowd of dots.
+ *
+ * Canvas 2D on purpose. A WebGL flame would mean shipping a renderer into a
+ * WebView that is scored on load speed, and WebGL support in mobile WebViews is
+ * patchy enough that a dead canvas was a real risk.
  */
 
-const MAX_PARTICLES = 160;
+/** Classic fire ramp: near black, through red and orange, to white hot. */
+const PALETTE = [
+  [7, 7, 7], [31, 7, 7], [47, 15, 7], [71, 15, 7], [87, 23, 7], [103, 31, 7],
+  [119, 31, 7], [143, 39, 7], [159, 47, 7], [175, 63, 7], [191, 71, 7], [199, 71, 7],
+  [223, 79, 7], [223, 87, 7], [223, 87, 7], [215, 95, 7], [215, 95, 7], [215, 103, 15],
+  [207, 111, 15], [207, 119, 15], [207, 127, 15], [207, 135, 23], [199, 135, 23],
+  [199, 143, 23], [199, 151, 31], [191, 159, 31], [191, 159, 31], [191, 167, 39],
+  [191, 167, 39], [191, 175, 47], [183, 175, 47], [183, 183, 47], [183, 183, 55],
+  [207, 207, 111], [223, 223, 159], [239, 239, 199], [255, 255, 255],
+];
+const TOP = PALETTE.length - 1;
+
+/** One buffer cell per this many device pixels. Coarse on purpose: fire is soft. */
+const SCALE = 5;
+/** Flame is low frequency, so the extra frames are spent for nothing. */
+const FPS = 30;
 
 export function createFire(canvas) {
   const ctx = canvas.getContext('2d', { alpha: true });
-  const particles = [];
-  let heat = 0;        // 0 quiet, 1 about to end
-  let target = 0;
-  let raf = null;
-  let width = 0;
-  let height = 0;
+
+  /**
+   * A canvas carries an intrinsic aspect ratio from its width and height
+   * attributes, 300x150 by default. With a height set in CSS that ratio wins
+   * over left and right stretching, so the element silently comes out half as
+   * wide as its container. Clearing it lets layout size the box.
+   */
+  canvas.style.aspectRatio = 'auto';
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  let cols = 0;
+  let rows = 0;
+  let cells = new Uint8Array(0);
+  let image = null;
+  let buffer = null;      // offscreen at buffer resolution, scaled up on draw
+  let bufferCtx = null;
+  let heat = 0;
+  let target = 0;
+  let raf = null;
+  let last = 0;
+
   function resize() {
     const rect = canvas.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return;
+
     const dpr = Math.min(devicePixelRatio || 1, 2);
-    width = rect.width;
-    height = rect.height;
-    canvas.width = Math.max(1, Math.floor(width * dpr));
-    canvas.height = Math.max(1, Math.floor(height * dpr));
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+
+    cols = Math.max(8, Math.ceil(canvas.width / SCALE));
+    rows = Math.max(6, Math.ceil(canvas.height / SCALE));
+    cells = new Uint8Array(cols * rows);
+
+    buffer = document.createElement('canvas');
+    buffer.width = cols;
+    buffer.height = rows;
+    bufferCtx = buffer.getContext('2d');
+    image = bufferCtx.createImageData(cols, rows);
   }
 
-  function spawn() {
-    // Cooler rounds get fewer, shorter, slower embers.
-    const count = Math.round(heat * 6);
-    for (let i = 0; i < count && particles.length < MAX_PARTICLES; i++) {
-      // Clustered toward the middle so it reads as a fire rather than a row of
-      // dots: three samples averaged approximates a bell curve cheaply.
-      const bias = (Math.random() + Math.random() + Math.random()) / 3;
-      particles.push({
-        x: bias * width,
-        y: height + 6,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: -(1.1 + Math.random() * 2.6 * (0.5 + heat)),
-        life: 1,
-        decay: 0.009 + Math.random() * 0.014,
-        r: 6 + Math.random() * (10 + heat * 16),
-      });
+  /** Seed the bottom row, then pull the heat upward. */
+  function diffuse() {
+    const base = Math.round(TOP * (0.7 + heat * 0.3));
+    const bottom = (rows - 1) * cols;
+    for (let x = 0; x < cols; x++) {
+      // A little variation along the base stops the flame reading as a bar.
+      cells[bottom + x] = Math.random() < 0.88 ? base : Math.max(0, base - 6 - Math.random() * 8);
     }
-  }
 
-  /** A warm bed of light along the bottom edge, under the rising tongues. */
-  function drawBed() {
-    const bed = ctx.createLinearGradient(0, height, 0, height - height * (0.3 + heat * 0.45));
-    bed.addColorStop(0, `hsl(30 100% 58% / ${0.42 * heat})`);
-    bed.addColorStop(0.5, `hsl(20 100% 52% / ${0.16 * heat})`);
-    bed.addColorStop(1, 'hsl(14 100% 50% / 0)');
-    ctx.fillStyle = bed;
-    ctx.fillRect(0, 0, width, height);
-  }
+    for (let y = rows - 1; y > 0; y--) {
+      for (let x = 0; x < cols; x++) {
+        const from = y * cols + x;
+        const value = cells[from];
+        if (value === 0) { cells[from - cols] = 0; continue; }
 
-  function frame() {
-    heat += (target - heat) * 0.05;
-    ctx.clearRect(0, 0, width, height);
-
-    if (heat > 0.02) {
-      spawn();
-      ctx.globalCompositeOperation = 'lighter';
-      drawBed();
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy *= 0.985;
-        p.life -= p.decay;
-        if (p.life <= 0) { particles.splice(i, 1); continue; }
-
-        // Yellow at the base, through orange, to a dim red as it dies.
-        const hue = 8 + p.life * 46;
-        const alpha = p.life * p.life * (0.42 + heat * 0.55);
-        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-        glow.addColorStop(0, `hsl(${hue} 100% 66% / ${alpha})`);
-        glow.addColorStop(0.45, `hsl(${hue - 4} 100% 54% / ${alpha * 0.45})`);
-        glow.addColorStop(1, `hsl(${hue} 100% 50% / 0)`);
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
+        /*
+         * Cooling has to be fast enough that the palette is swept in roughly a
+         * third of the buffer height. Too slow and every cell sits near the top
+         * of the ramp, which paints a solid yellow slab rather than a fire with
+         * a thin white core and mostly orange above it.
+         */
+        const decay = Math.round(Math.random() * (3.6 + (1 - heat) * 3));
+        const drift = Math.round(Math.random() * 2) - 1;
+        const to = from - cols + drift;
+        if (to >= 0 && to < cells.length) cells[to] = Math.max(0, value - decay);
       }
-      ctx.globalCompositeOperation = 'source-over';
     }
+  }
 
+  function paint() {
+    const data = image.data;
+    for (let i = 0; i < cells.length; i++) {
+      const [r, g, b] = PALETTE[cells[i]];
+      const at = i * 4;
+      data[at] = r;
+      data[at + 1] = g;
+      data[at + 2] = b;
+      // Alpha tracks heat so the flame melts into the panel instead of sitting
+      // on it as a rectangle.
+      data[at + 3] = cells[i] === 0 ? 0 : Math.min(240, cells[i] * 7);
+    }
+    bufferCtx.putImageData(image, 0, 0);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    // Drawn normally, not added: the palette already carries the brightness, and
+    // adding it on top of the panel colour turned the flame green.
+    ctx.drawImage(buffer, 0, 0, canvas.width, canvas.height);
+  }
+
+  function frame(now) {
     raf = requestAnimationFrame(frame);
+    if (now - last < 1000 / FPS) return;
+    last = now;
+
+    heat += (target - heat) * 0.06;
+    if (heat < 0.015) {
+      if (cells.some(Boolean)) { cells.fill(0); ctx.clearRect(0, 0, canvas.width, canvas.height); }
+      return;
+    }
+    diffuse();
+    paint();
   }
 
   function start() {
@@ -107,26 +149,27 @@ export function createFire(canvas) {
     if (!raf) return;
     cancelAnimationFrame(raf);
     raf = null;
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   addEventListener('resize', resize, { passive: true });
-  // A backgrounded tab should not burn the phone's battery on a flame nobody sees.
+  if (typeof ResizeObserver === 'function') new ResizeObserver(resize).observe(canvas);
+  // A hidden tab should not burn battery on a flame nobody can see.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') start(); else stop();
   });
 
   return {
-    /** 0 is embers, 1 is roaring. */
+    /** 0 is out, 1 is roaring. */
     setHeat(value) {
       target = Math.max(0, Math.min(1, value));
-      if (target > 0.02) start();
+      if (target > 0.015) start();
     },
     /** A short flare when a bump lands. */
     flare() {
       const was = target;
       target = 1;
-      setTimeout(() => { target = was; }, 700);
+      setTimeout(() => { target = was; }, 900);
     },
     start,
     stop,
@@ -135,12 +178,12 @@ export function createFire(canvas) {
 }
 
 /**
- * How hot the round is, from the two things that make it tense: how far the
- * price has climbed above the floor, and how little time is left.
+ * How hot the day is, from the two things that make it tense: how far the price
+ * has climbed above the floor, and how little time is left before the close.
  */
-export function heatFrom({ price, floor, endsIn, roundMs = 300_000, holder }) {
+export function heatFrom({ price, floor, endsIn, roundMs = 86_400_000, holder }) {
   if (!holder) return 0;
   const climb = Math.min(1, Math.log2(Math.max(1, price / floor)) / 4);
   const urgency = endsIn === null ? 0 : 1 - Math.min(1, endsIn / roundMs);
-  return Math.min(1, 0.18 + climb * 0.5 + urgency * 0.55);
+  return Math.min(1, 0.4 + climb * 0.36 + urgency * 0.34);
 }
