@@ -73,7 +73,10 @@ function payday(amount) {
 /* ---------- rendering ---------- */
 
 function say(text, tone = 'plain') {
-  el.status.textContent = text;
+  // Shown only when it has something to say. A permanent line here just
+  // repeated what the slot was already displaying.
+  el.status.hidden = !text;
+  el.status.textContent = text ?? '';
   el.status.dataset.tone = tone;
 }
 
@@ -125,7 +128,7 @@ function render(next) {
   countTo(el.payout, next.payout);
 
   renderTape(next.events, previous?.events);
-  renderWinners(next.winners);
+  renderWinners(next.winners?.slice(0, 3));
   renderTotals(next.totals);
   tick();
   renderAction();

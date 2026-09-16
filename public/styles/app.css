@@ -13,11 +13,15 @@ body {
   min-height:100vh; min-height:100svh;
   padding: max(10px, env(safe-area-inset-top)) 10px max(14px, env(safe-area-inset-bottom));
   background-color:var(--field);
+  /* Three screens at different pitches and offsets. A single regular grid reads
+     as a texture swatch; overlapping them at odd sizes breaks the repeat up
+     into something closer to a coarse halftone. */
   background-image:
-    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.13) 1px, transparent 0),
-    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.06) 1px, transparent 0);
-  background-size: 9px 9px, 4px 4px;
-  background-position: 0 0, 2px 2px;
+    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.16) 1.4px, transparent 0),
+    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.09) 1.2px, transparent 0),
+    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.05) 1px, transparent 0);
+  background-size: 17px 17px, 11px 11px, 29px 29px;
+  background-position: 0 0, 5px 7px, 13px 3px;
   color:var(--ink);
   font-family:var(--font-body);
   font-size:var(--base);
@@ -31,7 +35,13 @@ button,input,textarea { font:inherit; color:inherit; }
 [hidden] { display:none !important; }
 :focus-visible { outline:2px solid var(--orange); outline-offset:-2px; }
 
-.sheet { max-width:430px; margin-inline:auto; background:var(--sheet); }
+.sheet {
+  max-width:420px;
+  /* Margin on all four sides so the sheet reads as trimmed out of the field
+     rather than as the page itself. */
+  margin:clamp(14px, 4vw, 30px) auto;
+  background:var(--sheet);
+}
 
 /* Every small label on the page speaks in this voice. */
 .lbl {
@@ -75,10 +85,10 @@ button,input,textarea { font:inherit; color:inherit; }
 .slot {
   position:relative; isolation:isolate;
   background:var(--slot); color:var(--on-slot);
-  padding:13px 13px 42px;
-  min-height:150px;
+  padding:14px 18px 54px;
+  min-height:270px;
   overflow:hidden;
-  display:grid; align-content:space-between; gap:9px;
+  display:grid; grid-template-rows:auto 1fr auto; gap:14px;
 }
 .slot-fire { position:absolute; inset:auto 0 0 0; width:100%; height:56px; z-index:0; pointer-events:none; }
 .slot > *:not(.slot-fire) { position:relative; z-index:1; }
@@ -95,16 +105,19 @@ button,input,textarea { font:inherit; color:inherit; }
 .tag-live { background:var(--orange); color:var(--sheet); }
 
 .slot-message {
+  align-self:center;
+  text-align:center;
+  padding-inline:2px;
   font-family:var(--font-display); font-weight:700;
   font-size:var(--message); line-height:0.94; letter-spacing:-0.05em;
   text-wrap:balance; overflow-wrap:anywhere;
 }
-.slot-holder { font-family:var(--font-mono); font-size:var(--micro); letter-spacing:0.14em; text-transform:uppercase; color:var(--on-slot-faint); }
+.slot-holder { text-align:center; font-family:var(--font-mono); font-size:var(--micro); letter-spacing:0.14em; text-transform:uppercase; color:var(--on-slot-faint); }
 
 /* ---- figures ---- */
 
 .figs { display:grid; grid-template-columns:1fr 1fr; }
-.fig { padding:11px 13px 12px; border-bottom:1px solid var(--ink); }
+.fig { padding:12px 18px 13px; border-bottom:1px solid var(--ink); }
 .fig + .fig { border-left:1px solid var(--rule); }
 .fig b {
   display:block; margin-top:1px;
@@ -159,7 +172,7 @@ button,input,textarea { font:inherit; color:inherit; }
 }
 .btn-quiet:hover { background:var(--ink); color:var(--sheet); }
 
-.status { padding:8px 13px; border-bottom:1px solid var(--rule); font-size:var(--small); color:var(--ink-soft); }
+.status { padding:10px 18px; border-bottom:1px solid var(--rule); font-size:var(--small); color:var(--ink-soft); }
 .status[data-tone='paid'] { color:var(--up); }
 .status[data-tone='live'], .status[data-tone='error'] { color:var(--orange); }
 
@@ -170,9 +183,9 @@ button,input,textarea { font:inherit; color:inherit; }
   enough that naming two people and showing the arithmetic lands it faster
   than any amount of explaining.
 */
-.works { border-bottom:1px solid var(--ink); }
-.works > .lbl { padding:9px 13px 7px; }
-.works ol { margin:0; padding:0 13px 11px; list-style:none; display:grid; gap:5px; }
+.works { border-top:1px solid var(--rule); }
+.works > .lbl { padding:14px 18px 7px; }
+.works ol { margin:0; padding:0 18px 11px; list-style:none; display:grid; gap:5px; }
 .works li {
   display:grid; grid-template-columns:1fr auto; gap:10px;
   font-family:var(--font-mono); font-size:var(--small);
@@ -182,13 +195,13 @@ button,input,textarea { font:inherit; color:inherit; }
 .works li[data-accent='in'] .v { color:var(--ink); }
 .works li[data-accent='up'] .v { color:var(--up); }
 .works li[data-accent='top'] { color:var(--orange); }
-.works .note { padding:0 13px 11px; font-size:var(--small); color:var(--ink-faint); }
+.works .note { padding:0 18px 14px; font-size:var(--small); color:var(--ink-faint); }
 
 /* ---- lists ---- */
 
-.block > .lbl { padding:9px 13px 7px; border-bottom:1px solid var(--ink); }
+.block > .lbl { padding:14px 18px 6px; }
 .block ul { margin:0; padding:0; list-style:none; }
-.block li { border-bottom:1px solid var(--rule); padding:7px 13px; }
+.block li { padding:6px 18px; }
 
 .tape li { display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:baseline; font-size:var(--small); }
 .tape li[data-kind='idle'] { grid-template-columns:1fr; color:var(--ink-faint); }
@@ -206,7 +219,8 @@ button,input,textarea { font:inherit; color:inherit; }
 .past .meta { font-family:var(--font-mono); font-size:var(--micro); letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint); }
 
 .foot {
-  padding:9px 13px;
+  padding:14px 18px 16px;
+  border-top:1px solid var(--rule);
   font-family:var(--font-mono); font-size:var(--micro);
   letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint);
   display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;

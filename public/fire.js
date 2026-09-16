@@ -72,6 +72,16 @@ export function createFire(canvas) {
     buffer.height = rows;
     bufferCtx = buffer.getContext('2d');
     image = bufferCtx.createImageData(cols, rows);
+
+    /*
+     * Rebuild the flame straight away rather than waiting for the next frame.
+     * Reallocating the buffer zeroes it, so a rotation, a keyboard opening, or
+     * anything else that resizes the box used to blank the fire for a moment.
+     */
+    if (heat > 0.015) {
+      for (let i = 0; i < rows; i++) diffuse();
+      paint();
+    }
   }
 
   /** Seed the bottom row, then pull the heat upward. */
