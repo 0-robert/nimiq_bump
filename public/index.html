@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BUMP</title>
+<meta name="description" content="One slot, shared by everyone. Take it by paying 1.5x, and the holder you took it from gets the money.">
+<meta name="theme-color" content="#020813">
+<link rel="preload" href="/fonts/archivo-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/app.css">
+</head>
+<body>
+<main class="shell">
+
+  <header class="masthead">
+    <span class="wordmark">BUMP</span>
+    <span class="motto">The loser cashes out.</span>
+  </header>
+
+  <section class="slot" id="slot" data-state="idle" aria-labelledby="slot-heading">
+    <h1 id="slot-heading" class="spec" style="padding:1rem 1.25rem 0">On the slot</h1>
+    <div class="slot-fill" id="slot-fill">
+      <p class="slot-message slot-empty" id="message">Nobody has it yet.</p>
+      <div class="slot-meta" id="meta"></div>
+    </div>
+  </section>
+
+  <dl class="panel">
+    <div class="row">
+      <dt class="spec">Price</dt>
+      <dd class="price num" id="price">&mdash;</dd>
+    </div>
+    <div class="row">
+      <dt class="spec">Holder gets</dt>
+      <dd class="gain num" id="payout">&mdash;</dd>
+    </div>
+    <div class="row">
+      <dt class="spec">Round ends</dt>
+      <dd class="clock num" id="clock" data-urgent="false">&mdash;</dd>
+    </div>
+    <div class="row">
+      <dt class="spec">Held by</dt>
+      <dd class="spec" id="holder" style="color:var(--text-dim)">Nobody</dd>
+    </div>
+  </dl>
+
+  <div class="actions">
+    <div class="compose" id="compose" hidden>
+      <textarea id="draft" maxlength="140" rows="3"
+        placeholder="Say something. Everyone in the app sees it."
+        aria-label="Your message"></textarea>
+      <footer>
+        <span class="spec count" id="count" data-over="false">140 left</span>
+        <button class="btn btn-ghost" id="cancel" type="button">Back</button>
+      </footer>
+    </div>
+    <button class="btn btn-primary" id="action" type="button">Connect wallet</button>
+  </div>
+
+  <p class="status" id="status" data-tone="plain">
+    Rounds start at 100 NIM, which is about three cents.
+  </p>
+
+  <section class="past" id="past" hidden>
+    <h2>Kept for good</h2>
+    <ol id="winners"></ol>
+  </section>
+
+  <section class="how">
+    <h2>How it works</h2>
+    <p>
+      There is one slot and everyone sees the same one. Taking it costs 1.5x
+      whatever the current holder paid, and that payment goes straight to them
+      from your wallet. Nothing is held in the middle.
+    </p>
+    <p>
+      So the person you take it from walks away with 50% more than they put in.
+      The only one out of pocket is whoever is still holding when the clock runs
+      out, and they get to keep their message up for good.
+    </p>
+    <p>
+      Every bump puts five minutes back on the clock. When it expires the price
+      drops to 100 NIM and the next round opens.
+    </p>
+    <h2>No chance element</h2>
+    <p>
+      Nothing here is drawn, rolled or randomised. The price is on screen before
+      you commit and after. You are buying one advertising slot at a published
+      price from someone who profits on the sale.
+    </p>
+  </section>
+
+  <div class="totals spec" id="totals" hidden></div>
+
+  <footer class="foot">
+    <p>
+      Built for the Nimiq Mini Apps Competition.
+      <a href="https://github.com/0-robert/bump">Source on GitHub</a>, MIT licensed.
+    </p>
+  </footer>
+
+</main>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

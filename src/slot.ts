@@ -183,7 +183,7 @@ export class Slot {
 
     await this.save(slot);
     await this.state.storage.setAlarm(now + POLL_MS);
-    await this.broadcast(slot);
+    this.broadcast(slot);
 
     return this.json({
       token: slot.claim.token,
@@ -201,7 +201,7 @@ export class Slot {
     if (slot.claim && slot.claim.token === body.token) {
       slot.claim = null;
       await this.save(slot);
-      await this.broadcast(slot);
+      this.broadcast(slot);
     }
     return this.json({ ok: true });
   }
@@ -268,11 +268,11 @@ export class Slot {
         else next = now + POLL_MS;
 
         await this.save(slot);
-        await this.broadcast(slot);
+        this.broadcast(slot);
       } else if (outcome.status === 'rejected') {
         slot.claim = null;
         await this.save(slot);
-        await this.broadcast(slot);
+        this.broadcast(slot);
       } else if (slot.claim.expiresAt > now) {
         next = now + POLL_MS;
       } else if (await this.stillWorthWatching(slot)) {
@@ -338,7 +338,7 @@ export class Slot {
     this.clients.add(writer);
 
     const slot = await this.tick(await this.load());
-    await this.send(writer, this.view(slot));
+    this.send(writer, this.view(slot));
 
     const heartbeat = setInterval(() => {
       writer.write(this.encoder.encode(': ping\n\n')).catch(() => {
@@ -356,15 +356,20 @@ export class Slot {
     });
   }
 
-  private async send(writer: WritableStreamDefaultWriter<Uint8Array>, payload: unknown): Promise<void> {
-    await writer.write(this.encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)).catch(() => {
+  /**
+   * Fire and forget on purpose. Awaiting a write blocks until the stream has a
+   * reader, and the first write happens before the Response is returned, so
+   * awaiting it deadlocks the connection it is trying to open.
+   */
+  private send(writer: WritableStreamDefaultWriter<Uint8Array>, payload: unknown): void {
+    writer.write(this.encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)).catch(() => {
       this.clients.delete(writer);
     });
   }
 
-  private async broadcast(slot: Stored): Promise<void> {
+  private broadcast(slot: Stored): void {
     const payload = this.view(slot);
-    await Promise.all([...this.clients].map((writer) => this.send(writer, payload)));
+    for (const writer of this.clients) this.send(writer, payload);
   }
 
   private json(body: unknown, status = 200): Response {
