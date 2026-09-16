@@ -4,8 +4,8 @@ One winner a day, at 19:00 UTC. Taking the slot in the last two minutes pushes t
 
 It is for anyone who wants to be seen inside Nimiq Pay. Builders pushing their own Mini App, someone wishing a friend happy birthday, or people taking it off each other for the sport of it.
 
-Nimiq is not a garnish here. Every action in the app is a payment. A ten bump day is twenty transactions, which fees alone would kill on most chains. Nimiq settles in about a second for a fraction of a cent, so a bid can cost three cents and still be worth making. Take the wallet out and nothing is left.
+Nimiq is not a garnish. Every action in the app is a payment. A ten bump day is twenty transactions, which fees alone would kill on most chains. Nimiq settles in about a second for a fraction of a cent, so a bid can cost three cents and still be worth making.
 
-Nothing is held in custody. The server issues a claim token, your wallet sends it as the transaction memo, and the server reads the chain for a payment to the right address carrying that token before the slot changes hands. It checks the transaction actually executed, because Albatross records failed ones too.
+Nothing is held in custody. The server issues a claim token, your wallet sends it as the memo, and the server reads the chain for a payment carrying that token before the slot changes hands. It checks the transaction executed, because Albatross records failed ones too.
 
-Nothing here is drawn, rolled or randomised.
+Nothing here is drawn or randomised.
