@@ -147,3 +147,22 @@ test('a capped name never splits a multi-byte character', () => {
   assert.equal([...name].length, 16);
   assert.ok(!name.includes('\ufffd'));
 });
+
+
+test('the gate accepts a real mainnet transaction shape', () => {
+  // Captured live from rpc.nimiqwatch.com. Note `to` arrives WITH spaces and
+  // executionResult is a flat boolean, not the wrapped object the types imply.
+  const live = {
+    hash: 'd3b07384d113edec49eaa6238ad5ff00',
+    blockNumber: 61_734_420,
+    confirmations: 35_102,
+    to: 'NQ07 0000 0000 0000 0000 0000 0000 0000 0000',
+    value: 295_886,
+    fee: 0,
+    recipientData: '',
+    executionResult: true,
+    networkId: 24,
+  };
+  const forClaim = { token: '', recipient: 'NQ070000000000000000000000000000000000', valueLuna: 295_886 };
+  assert.deepEqual(checkTx(live, forClaim, 24), { ok: true });
+});

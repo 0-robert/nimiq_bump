@@ -146,7 +146,14 @@ export async function findPayment(
   try {
     [head, raw] = await Promise.all([
       rpc<number>(rpcUrl, 'getBlockNumber'),
-      rpc<Record<string, unknown>[]>(rpcUrl, 'getTransactionsByAddress', [address, lookback]),
+      /*
+       * Three parameters, not two. The node wants [address, max, startAt], and
+       * startAt has to be a transaction hash string or null: passing two
+       * arguments is rejected outright with "expected struct with 3 elements",
+       * and passing 0 or "" for the third is rejected as the wrong type.
+       * Verified against the live node, not inferred from the docs.
+       */
+      rpc<Record<string, unknown>[]>(rpcUrl, 'getTransactionsByAddress', [address, lookback, null]),
     ]);
   } catch (error) {
     // A flaky node is not a failed payment. Stay pending and look again.
