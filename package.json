@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.ts",
     "copycheck": "node ../.claude/skills/avoid-ai-writing/bin/avoid-ai-writing.js copy/strings.txt"
   },
   "devDependencies": {

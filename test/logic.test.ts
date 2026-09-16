@@ -1,0 +1,123 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  nextPrice, payout, nimToLuna, normaliseAddress, addressesMatch,
+  shortAddress, unwrap, toWalletError, hexToUtf8, WalletError,
+} from '../src/nimiq.ts';
+import { checkTx, isFinal } from '../src/verify.ts';
+
+const HOLDER = 'NQ22 JV9P 548B JL00 TRKS GT1P X3QJ 52BV ENK3';
+
+test('price ladder rises by half each time', () => {
+  assert.deepEqual(
+    [100, 150, 225, 338, 507, 761, 1142, 1713, 2570].slice(1),
+    [100, 150, 225, 338, 507, 761, 1142, 1713].map(nextPrice),
+  );
+});
+
+test('price always strictly increases, even at the smallest amounts', () => {
+  for (let price = 1; price < 500; price++) {
+    assert.ok(nextPrice(price) > price, `${price} did not increase`);
+  }
+});
+
+test('being bumped pays back more than you put in', () => {
+  for (const paid of [100, 150, 225, 338, 1713]) {
+    const { receives, profit } = payout(paid);
+    assert.ok(profit > 0, `no profit at ${paid}`);
+    assert.equal(receives, paid + profit);
+    assert.ok(profit / paid >= 0.49, `profit was only ${((profit / paid) * 100).toFixed(1)}% at ${paid}`);
+  }
+});
+
+test('fractional and negative prices are refused rather than rounded', () => {
+  assert.throws(() => nextPrice(10.5), RangeError);
+  assert.throws(() => nextPrice(0), RangeError);
+  assert.throws(() => nimToLuna(-1), RangeError);
+});
+
+test('Luna conversion stays an exact integer', () => {
+  assert.equal(nimToLuna(100), 10_000_000);
+  assert.equal(nimToLuna(2570), 257_000_000);
+  assert.ok(Number.isSafeInteger(nimToLuna(1_000_000)));
+});
+
+test('addresses compare regardless of spacing or case', () => {
+  assert.equal(normaliseAddress(HOLDER), 'NQ22JV9P548BJL00TRKSGT1PX3QJ52BVENK3');
+  assert.ok(addressesMatch(HOLDER, 'nq22jv9p548bjl00trksgt1px3qj52bvenk3'));
+  assert.ok(!addressesMatch(HOLDER, 'NQ07 0000 0000 0000 0000 0000 0000 0000 0000'));
+  assert.match(shortAddress(HOLDER), /^NQ22 JV9P \.\.\. ENK3$/);
+});
+
+test('a declined payment is caught whether it throws or resolves', () => {
+  // The provider does both. Missing either one reads a refusal as a payment.
+  assert.throws(
+    () => unwrap({ error: { type: 'PermissionDeniedError', message: 'User rejected' } }),
+    (error: WalletError) => error.code === 'PERMISSION_DENIED',
+  );
+  const thrown = toWalletError(Object.assign(new Error('User cancelled'), { name: 'PermissionDeniedError' }));
+  assert.equal(thrown.code, 'PERMISSION_DENIED');
+});
+
+test('a genuine failure is not mistaken for a refusal', () => {
+  assert.throws(
+    () => unwrap({ error: { type: 'InvalidTransaction', message: 'insufficient funds' } }),
+    (error: WalletError) => error.code === 'INVALID_TX',
+  );
+});
+
+test('a successful result passes straight through', () => {
+  assert.equal(unwrap('a'.repeat(64)), 'a'.repeat(64));
+  assert.deepEqual(unwrap([HOLDER]), [HOLDER]);
+});
+
+test('hex memos decode, and malformed ones do not throw', () => {
+  assert.equal(hexToUtf8('6131623263336434'), 'a1b2c3d4');
+  assert.equal(hexToUtf8('0x6131623263336434'), 'a1b2c3d4');
+  assert.equal(hexToUtf8('nonsense'), '');
+  assert.equal(hexToUtf8('abc'), '');
+});
+
+const claim = { token: 'a1b2c3d4', recipient: HOLDER, valueLuna: 15_000_000 };
+const good = {
+  hash: 'f'.repeat(64),
+  blockNumber: 100,
+  to: normaliseAddress(HOLDER),
+  value: 15_000_000,
+  confirmations: 60,
+  recipientData: '6131623263336434',
+  executionResult: true,
+  networkId: 24,
+};
+
+test('a correct payment passes the gate', () => {
+  assert.deepEqual(checkTx(good, claim, 24), { ok: true });
+});
+
+test('a failed transaction is rejected even though it is on chain', () => {
+  // Albatross records failed transactions: fee charged, effect discarded.
+  const result = checkTx({ ...good, executionResult: false }, claim, 24);
+  assert.equal(result.ok, false);
+});
+
+test('the gate rejects wrong network, wrong recipient, underpayment and wrong memo', () => {
+  const bad = [
+    { ...good, networkId: 5 },
+    { ...good, to: 'NQ07000000000000000000000000000000000' },
+    { ...good, value: 14_999_999 },
+    { ...good, recipientData: '6465616462656566' },
+  ];
+  for (const tx of bad) assert.equal(checkTx(tx, claim, 24).ok, false);
+});
+
+test('overpaying is accepted', () => {
+  assert.deepEqual(checkTx({ ...good, value: 15_000_001 }, claim, 24), { ok: true });
+});
+
+test('finality needs a full batch, not just depth', () => {
+  assert.ok(isFinal(good, 160));
+  assert.ok(!isFinal({ ...good, confirmations: 59 }, 158));
+  // Depth is taken from whichever source is further along.
+  assert.ok(isFinal({ ...good, confirmations: 0 }, 200));
+});
