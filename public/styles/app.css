@@ -102,7 +102,7 @@ p { text-wrap: pretty; }
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
-.wordmark {
+h1.wordmark {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: var(--step-1);
@@ -111,6 +111,8 @@ p { text-wrap: pretty; }
 .motto { color: var(--muted); font-size: var(--step--1); }
 
 /* ---- the slot ---- */
+
+.label { margin-bottom: 0.6rem; }
 
 /*
   Chamfered plate. The 1px edge is the parent's padding showing through, and the

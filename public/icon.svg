@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="BUMP">
+  <defs>
+    <radialGradient id="g" cx="100%" cy="100%" r="140%">
+      <stop offset="0" stop-color="#260133"/><stop offset="1" stop-color="#1F2348"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <!-- One slot, and an arrow taking it. -->
+  <rect x="14" y="30" width="36" height="12" rx="2" fill="#0CA6FE"/>
+  <path d="M32 12l11 13H21z" fill="#E9B213"/>
+</svg>

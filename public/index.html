@@ -8,18 +8,19 @@
 <meta name="theme-color" content="#020813">
 <link rel="preload" href="/fonts/archivo-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles/app.css">
 </head>
 <body>
 <main class="shell">
 
   <header class="masthead">
-    <span class="wordmark">BUMP</span>
-    <span class="motto">The loser cashes out.</span>
+    <h1 class="wordmark">BUMP</h1>
+    <p class="motto">The loser cashes out.</p>
   </header>
 
+  <h2 class="spec label" id="slot-heading">On the slot</h2>
   <section class="slot" id="slot" data-state="idle" aria-labelledby="slot-heading">
-    <h1 id="slot-heading" class="spec" style="padding:1rem 1.25rem 0">On the slot</h1>
     <div class="slot-fill" id="slot-fill">
       <p class="slot-message slot-empty" id="message">Nobody has it yet.</p>
       <div class="slot-meta" id="meta"></div>
