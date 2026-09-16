@@ -163,6 +163,9 @@ test('the gate accepts a real mainnet transaction shape', () => {
     executionResult: true,
     networkId: 24,
   };
-  const forClaim = { token: '', recipient: 'NQ070000000000000000000000000000000000', valueLuna: 295_886 };
+  // Derived, not hand-typed: the claim stores the flat form while the node
+  // returns the spaced one, and counting 32 zeros by eye is how that test got
+  // written wrong the first time.
+  const forClaim = { token: '', recipient: normaliseAddress(live.to), valueLuna: 295_886 };
   assert.deepEqual(checkTx(live, forClaim, 24), { ok: true });
 });
