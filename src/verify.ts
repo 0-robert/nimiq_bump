@@ -70,18 +70,42 @@ export async function rpc<T>(url: string, method: string, params: unknown[] = []
   return (result && typeof result === 'object' && 'data' in result ? (result as { data: T }).data : result) as T;
 }
 
-/** Field names differ between node builds and between RPC and the REST explorer. */
-function readTx(raw: Record<string, unknown>): ChainTx | null {
+/**
+ * True only for an actual true. The REST explorer serialises everything as a
+ * string, so its "executed" arrives as "True" or "False", and Boolean("False")
+ * is true. That single coercion would have accepted every failed transaction.
+ */
+function truthy(value: unknown): boolean {
+  if (typeof value === 'string') return value.trim().toLowerCase() === 'true';
+  return Boolean(value);
+}
+
+function base64ToHex(b64: string): string {
+  try {
+    return Array.from(atob(b64), (c) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Field names differ between the JSON-RPC node and the REST explorer, and the
+ * explorer sends every value as a string, its memo as base64 rather than hex,
+ * and no network id at all. Everything is normalised to one shape here.
+ */
+export function readTx(raw: Record<string, unknown>, source: 'rpc' | 'rest', networkId: number): ChainTx | null {
   const hash = raw.hash ?? raw.transactionHash;
-  const to = raw.to ?? raw.toAddress ?? raw.recipient;
+  const to = raw.to ?? raw.toAddress ?? raw.recipient ?? raw.receiver_address;
   if (typeof hash !== 'string' || typeof to !== 'string') return null;
 
-  // executionResult may arrive flattened, wrapped, or (on the REST API) as `executed`.
+  // executionResult may arrive flattened, wrapped, or (on REST) as `executed`.
   const executionRaw = raw.executionResult ?? raw.executed;
   const executionResult =
     typeof executionRaw === 'object' && executionRaw !== null
-      ? Boolean((executionRaw as { executionResult?: unknown }).executionResult)
-      : Boolean(executionRaw);
+      ? truthy((executionRaw as { executionResult?: unknown }).executionResult)
+      : truthy(executionRaw);
+
+  const memo = String(raw.recipientData ?? raw.data ?? '');
 
   return {
     hash,
@@ -89,10 +113,38 @@ function readTx(raw: Record<string, unknown>): ChainTx | null {
     blockNumber: Number(raw.blockNumber ?? raw.block_height ?? 0),
     value: Number(raw.value ?? 0),
     confirmations: Number(raw.confirmations ?? 0),
-    recipientData: String(raw.recipientData ?? raw.data ?? ''),
+    recipientData: source === 'rest' ? base64ToHex(memo) : memo,
     executionResult,
-    networkId: Number(raw.networkId ?? raw.network_id ?? 0),
+    // The explorer carries no network field; the base URL already fixes which
+    // network it is, so the configured id is taken as read.
+    networkId: source === 'rest' ? networkId : Number(raw.networkId ?? raw.network_id ?? 0),
   };
+}
+
+/** The explorer is a REST API; anything else is treated as a JSON-RPC node. */
+export function isRest(url: string): boolean {
+  return /nimiq\.watch\/api/.test(url);
+}
+
+async function restGet<T>(base: string, path: string): Promise<T> {
+  const response = await fetch(`${base.replace(/\/$/, '')}${path}`);
+  if (response.status === 404) return [] as unknown as T;
+  if (response.status === 429) throw new RpcError('rate limited', true);
+  if (!response.ok) throw new RpcError(`${path} returned HTTP ${response.status}`, response.status >= 500);
+  return (await response.json()) as T;
+}
+
+/** Current chain height from whichever backend is configured. */
+export async function headBlock(url: string): Promise<number> {
+  if (!isRest(url)) return rpc<number>(url, 'getBlockNumber');
+  const latest = await restGet<Array<{ height: string | number }>>(url, '/latest/1');
+  return Number(latest[0]?.height ?? 0);
+}
+
+/** Recent transactions to an address, from whichever backend is configured. */
+async function recentTo(url: string, address: string, max: number): Promise<Record<string, unknown>[]> {
+  if (!isRest(url)) return rpc<Record<string, unknown>[]>(url, 'getTransactionsByAddress', [address, max, null]);
+  return restGet<Record<string, unknown>[]>(url, `/account-transactions/${encodeURIComponent(address)}/${max}`);
 }
 
 /**
@@ -143,18 +195,15 @@ export async function findPayment(
 
   let head: number;
   let raw: Record<string, unknown>[];
+  const source = isRest(rpcUrl) ? 'rest' : 'rpc';
   try {
-    [head, raw] = await Promise.all([
-      rpc<number>(rpcUrl, 'getBlockNumber'),
-      /*
-       * Three parameters, not two. The node wants [address, max, startAt], and
-       * startAt has to be a transaction hash string or null: passing two
-       * arguments is rejected outright with "expected struct with 3 elements",
-       * and passing 0 or "" for the third is rejected as the wrong type.
-       * Verified against the live node, not inferred from the docs.
-       */
-      rpc<Record<string, unknown>[]>(rpcUrl, 'getTransactionsByAddress', [address, lookback, null]),
-    ]);
+    /*
+     * On the JSON-RPC node getTransactionsByAddress takes three parameters,
+     * not two: [address, max, startAt], where startAt is a hash string or
+     * null. Two arguments are rejected outright, and 0 or "" for the third is
+     * the wrong type. Verified against the live node, not inferred from docs.
+     */
+    [head, raw] = await Promise.all([headBlock(rpcUrl), recentTo(rpcUrl, address, lookback)]);
   } catch (error) {
     // A flaky node is not a failed payment. Stay pending and look again.
     if (error instanceof RpcError && error.retryable) return { status: 'pending' };
@@ -162,7 +211,7 @@ export async function findPayment(
   }
 
   for (const entry of raw ?? []) {
-    const tx = readTx(entry);
+    const tx = readTx(entry, source, networkId);
     if (!tx) continue;
     if (hexToUtf8(tx.recipientData) !== claim.token) continue;
 

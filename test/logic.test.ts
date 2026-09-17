@@ -169,3 +169,38 @@ test('the gate accepts a real mainnet transaction shape', () => {
   const forClaim = { token: '', recipient: normaliseAddress(live.to), valueLuna: 295_886 };
   assert.deepEqual(checkTx(live, forClaim, 24), { ok: true });
 });
+
+import { readTx, isRest } from '../src/verify.ts';
+
+test('the REST explorer shape is read correctly, strings and all', () => {
+  // Captured live from test-api.nimiq.watch. Every value is a string.
+  const rest = {
+    block_height: '11640375', hash: '5582ae19a470c39cfe05a8ae3d98f110d04519c1c553',
+    sender_address: 'NQ04 4GVG UJ2G EC2K NYCL XBND F8PB QD4U AB6A', value: '360000', fee: '0',
+    executed: 'True', timestamp: '1789603407',
+    receiver_address: 'NQ07 0000 0000 0000 0000 0000 0000 0000 0000',
+    data: btoa('a1b2c3d4'), confirmations: '44595',
+  };
+  const tx = readTx(rest, 'rest', 5)!;
+  assert.equal(tx.to, 'NQ07 0000 0000 0000 0000 0000 0000 0000 0000');
+  assert.equal(tx.value, 360_000);
+  assert.equal(tx.blockNumber, 11_640_375);
+  assert.equal(tx.confirmations, 44_595);
+  assert.equal(tx.executionResult, true);
+  assert.equal(tx.networkId, 5);
+  assert.equal(hexToUtf8(tx.recipientData), 'a1b2c3d4');
+});
+
+test('a failed REST transaction is not mistaken for a success', () => {
+  // Boolean("False") is true. This is the one that would have paid out on failures.
+  const tx = readTx({ hash: 'x', receiver_address: 'NQ07', executed: 'False', value: '1' }, 'rest', 5)!;
+  assert.equal(tx.executionResult, false);
+  const rpcTx = readTx({ hash: 'x', to: 'NQ07', executionResult: false, value: 1, networkId: 24 }, 'rpc', 24)!;
+  assert.equal(rpcTx.executionResult, false);
+});
+
+test('backend is picked from the URL', () => {
+  assert.ok(isRest('https://test-api.nimiq.watch/api/v1'));
+  assert.ok(isRest('https://api.nimiq.watch/api/v1/'));
+  assert.ok(!isRest('https://rpc.nimiqwatch.com'));
+});

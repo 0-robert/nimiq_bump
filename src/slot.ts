@@ -7,7 +7,7 @@
  */
 
 import { addressesMatch, normaliseAddress, nextPrice, nimToLuna, sanitiseName, CLAIM_TOKEN_BYTES, MAX_NAME_LENGTH } from './nimiq.ts';
-import { findPayment, rpc } from './verify.ts';
+import { findPayment, headBlock } from './verify.ts';
 import { screen } from './moderate.ts';
 
 export const MAX_MESSAGE_LENGTH = 140;
@@ -456,7 +456,7 @@ export class Slot {
 
   private async head(): Promise<number> {
     try {
-      return await rpc<number>(this.env.RPC_URL, 'getBlockNumber');
+      return await headBlock(this.env.RPC_URL);
     } catch {
       // Only used to record where to start looking, so a miss costs nothing.
       return 0;
