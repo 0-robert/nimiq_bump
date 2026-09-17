@@ -8,4 +8,8 @@ I did not want to pick between a screen that feels dead for half a minute and a 
 
 Two other things worth knowing. The provider has no sender parameter, so the wallet picks its own signing account and it is not necessarily the one on screen. Everything is reconciled by recipient and memo instead. And a declined payment comes back two different ways, sometimes thrown and sometimes resolved as an error object, which is an open bug. Handling only one of them means a refusal reads as a successful payment, so both paths go through the same function and nine of the tests cover it.
 
+It has run for real. The first payment, on testnet from my own phone, landed on chain with the claim token in the memo, 100 NIM to the address the server named, and the slot changed hands. Three things I could not find in any documentation were settled by that one transaction. The memo field holds a 16 byte token. The wallet paid from a different account than the one it had shown me, which is why the server matches on recipient and memo and never on sender. And the explorer returns the memo as hex, not the base64 its documentation describes; the server decoded it the wrong way for an hour, comparing a real token against noise, and the test that now guards it is built from that exact transaction.
+
+Two things reached the board that should not have. Llama Guard classifies harm, not language, so plain swearing passed it. A profanity list now runs before the model is asked, with the usual evasions folded flat and whole words only, so shitake and class still pass.
+
 The whole slot is one Durable Object. They run single threaded, so two people bumping in the same second are put in order by the platform and the race cannot happen rather than being defended against.
