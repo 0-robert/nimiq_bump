@@ -35,7 +35,13 @@ GENESIS_ADDRESS = "NQ05 L4NV YHX4 S8QV 4HT3 TVUU JE8D 2SHD BH2Y"
 # node exists for testnet, so this one reads the REST explorer instead.
 [env.test]
 name = "bump-test"
-routes = [{ pattern = "test.bump.roberthq.com", custom_domain = true }]
+# Two hosts: the nested one is the intended name; the one-level alias sits under
+# the zone's wildcard certificate and answers immediately while the nested
+# certificate is still being issued.
+routes = [
+  { pattern = "test.bump.roberthq.com", custom_domain = true },
+  { pattern = "bump-test.roberthq.com", custom_domain = true },
+]
 [[env.test.durable_objects.bindings]]
 name = "SLOT"
 class_name = "Slot"
