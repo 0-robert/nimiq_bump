@@ -1,13 +1,13 @@
-BUMP. One message slot for the whole app, and the loser cashes out.
+BUMP is a Nimiq Pay mini app with a single message slot. Everyone who opens it sees the same message, and you can replace it by paying 1.25x whatever the last person paid. The money goes straight from your wallet to theirs, so the person you knocked off ends up with 25% more than they put in. The day closes at 19:00 UTC. Whoever is up at close keeps their message on the wall permanently and holds the slot overnight.
 
-There is one message on screen and everyone sees the same one. You replace it by paying 1.25x whatever the last person paid. That money goes straight from your wallet to theirs, so the person you knocked off walks away with 25% more than they put in. The day closes at 19:00 UTC. Whoever is up at close keeps their message on the wall for good, and owns the slot overnight.
+Bob posts for 100. Alice replaces him for 125. Bob made 25 NIM by losing. Alice is up.
 
-Bob posts for 100. Alice replaces him for 125. Bob made 25 NIM for losing. Alice is up.
+I built it on Nimiq because a busy day is twenty replacements, which means twenty wallet-to-wallet payments with nothing held in the middle. On most chains the fees would make that pointless. Here a bid costs three cents and lands in a second.
 
-Why I built it on Nimiq specifically: a busy day is twenty replacements, so twenty payments, each one wallet to wallet with nothing held in the middle. On most chains the fees would kill that before it started. Here a bid costs three cents and lands in a second, which is what makes a game out of it at all.
+The hardest part was deciding when a payment counts. Nimiq says a transaction lands in a second, and it does, but for up to a minute after that the chain can still throw it out. A transaction that failed also gets written to the chain, with the fee taken, the same as one that worked. So seeing your payment on the chain does not yet mean it went through.
 
-The bit I spent the longest on is settlement. Nimiq's one second figure is inclusion, not finality. Micro blocks can be reorganised up to 59 deep, and Albatross writes failed transactions to the chain with the fee charged, so a transaction existing proves nothing. The slot changes hands as soon as the payment is included and says on its face that it is still confirming. Before the server treats it as final it checks the execution result, the recipient, the value, the network, the memo, and a full batch of confirmations. Until then the slot says it is still confirming, and a transaction a reorg took away would leave it that way rather than pretend it was final.
+The app handles that in two steps. As soon as the payment shows up, your message goes up with a Confirming tag on it. In the background the server checks that the payment succeeded, went to the right person, was for the right amount, and carried the right reference, then waits for the chain to make it final. Only then does the tag change to Confirmed. If the chain threw the payment out in that window, the tag would never change, and the message would sit there marked as unconfirmed rather than pretend it was final.
 
-It runs at prod.bump.roberthq.com. Open it in Nimiq Pay through Mini Apps, then Custom URL. There is a testnet copy at test.bump.roberthq.com if you want to try it with free NIM first. Code is on GitHub under MIT.
+It runs at prod.bump.roberthq.com. Open it in Nimiq Pay through Mini Apps, then Custom URL. There is a testnet copy at test.bump.roberthq.com if you want to try it with free NIM first. The code is on GitHub under MIT.
 
-Go and take it off me.
+Come and take it off me.
