@@ -24,7 +24,7 @@ FLOOR_NIM = "100"
 CLOSE_HOUR_UTC = "19"
 CLAIM_SECONDS = "60"
 # Receives the opening bid of round 1 only. Every later round pays the previous winner.
-GENESIS_ADDRESS = "NQ07 0000 0000 0000 0000 0000 0000 0000 0000"
+GENESIS_ADDRESS = "NQ05 L4NV YHX4 S8QV 4HT3 TVUU JE8D 2SHD BH2Y"
 
 # Testnet. Deploys as a second worker so the payment path can be exercised on a
 # phone with free test NIM before anything real is at stake. No public JSON-RPC
@@ -42,4 +42,4 @@ RPC_URL = "https://test-api.nimiq.watch/api/v1"
 FLOOR_NIM = "100"
 CLOSE_HOUR_UTC = "19"
 CLAIM_SECONDS = "60"
-GENESIS_ADDRESS = "NQ07 0000 0000 0000 0000 0000 0000 0000 0000"
+GENESIS_ADDRESS = "NQ05 L4NV YHX4 S8QV 4HT3 TVUU JE8D 2SHD BH2Y"
