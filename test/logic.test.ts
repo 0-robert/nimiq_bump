@@ -238,3 +238,13 @@ test('ordinary words that merely contain a swear word pass', () => {
     assert.ok(!hasProfanity(s), `false positive: ${s}`);
   }
 });
+
+
+test('a poster called x is not profanity, and neither is the letter on its own', () => {
+  // The list holds "xxx"; folding the list made that "x" and refused every
+  // message whose author was called x, which is exactly how the probes were named.
+  for (const s of ['x: anyone up for lunch at 1?', 'x marks the spot', 'Max: hello', 'x'])
+    assert.ok(!hasProfanity(s), `false positive: ${s}`);
+  assert.ok(hasProfanity('xxx'));
+  assert.ok(hasProfanity('shiiiit'));
+});

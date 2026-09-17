@@ -20,9 +20,26 @@ function normalise(text: string): string {
   return text
     .toLowerCase()
     .replace(/[0134578@$!]/g, (c) => LEET[c] ?? c)
-    // A single separator between letters that are being spelled out one at a time.
-    .replace(/(?<=[a-z])[\s.\-_*](?=[a-z](?:[\s.\-_*][a-z])+)/g, '')
-    .replace(/(.)\1{2,}/g, '$1');
+    // Letters spelled out one at a time, "s.h.i.t" or "f u c k": three or more
+    // single letters joined by separators collapse into one word.
+    .replace(/\b(?:[a-z][\s.\-_]){2,}[a-z]\b/g, (run) => run.replace(/[\s.\-_]/g, ''));
+}
+
+/**
+ * Stretched letters, "shiiit", folded to one. Applied to the input only. The
+ * list contains "xxx", and folding the list turned it into "x", which then
+ * refused every message whose poster was called x. The input is tested both
+ * ways so "xxx" and "shiiit" are both still caught.
+ */
+const unstretch = (text: string) => text.replace(/(.)\1{2,}/g, '$1');
+
+/**
+ * A masked vowel, "f*ck" or "sh*t", is tried with each vowel in its place.
+ * Five short strings, tested once each; a message this size costs nothing.
+ */
+function unmasked(text: string): string[] {
+  if (!text.includes('*')) return [text];
+  return ['u', 'i', 'a', 'e', 'o'].map((v) => text.replace(/\*/g, v));
 }
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -42,7 +59,10 @@ const PROFANE = new RegExp(
  * Plain swearing is refused here, cheaply, before the model is asked.
  */
 export function hasProfanity(text: string): boolean {
-  return PROFANE.test(normalise(text));
+  return unmasked(text).some((variant) => {
+    const flat = normalise(variant);
+    return PROFANE.test(flat) || PROFANE.test(unstretch(flat));
+  });
 }
 
 /** Caught before the model runs, because these are not worth a round trip. */
