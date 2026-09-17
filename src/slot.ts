@@ -248,7 +248,15 @@ export class Slot {
     if (!verdict.ok) return this.fail(422, 'blocked', verdict.reason);
 
     const recipient = this.payee(slot);
-    if (addressesMatch(recipient, bidder)) {
+    /*
+     * Paying yourself is refused, with one exception: the very first post ever
+     * pays the genesis address, and if that is the builder seeding the slot
+     * the payment is a wash. Refusing it would mean nobody could open day one
+     * without a second wallet, and a free post would need a second code path
+     * that skips verification. A payment to yourself keeps the one path.
+     */
+    const seedingGenesis = addressesMatch(recipient, this.env.GENESIS_ADDRESS) && slot.holder === null && slot.winners.length === 0;
+    if (addressesMatch(recipient, bidder) && !seedingGenesis) {
       return this.fail(409, 'self-pay', 'You cannot replace your own message.');
     }
 
