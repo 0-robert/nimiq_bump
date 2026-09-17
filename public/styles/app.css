@@ -104,8 +104,8 @@ a { color:inherit; }
 /* ---- the hero: a short note, then the message set like a report title ---- */
 
 .hero {
-  display:grid; grid-template-rows:auto 1fr auto; gap:28px;
-  min-height:228px;
+  display:grid; grid-template-rows:auto 1fr auto; gap:14px;
+  min-height:200px;
   padding:18px var(--gutter) 22px;
   border-bottom:1px solid var(--ink);
 }
@@ -117,6 +117,7 @@ a { color:inherit; }
   text-wrap:balance; overflow-wrap:anywhere;
 }
 .hero-title[data-long='true'] { font-size:var(--title-long); line-height:1.06; letter-spacing:-0.035em; }
+.hero-title[data-short='true'] { font-size:var(--title-short); line-height:0.92; letter-spacing:-0.055em; }
 
 /* ---- figures ---- */
 

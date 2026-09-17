@@ -113,7 +113,9 @@ function render(next) {
     el.state.hidden = true;
   }
   // A long message is set smaller so it still reads as one title, not a paragraph.
-  el.message.dataset.long = String(el.message.textContent.length > 44);
+  const length = el.message.textContent.length;
+  el.message.dataset.long = String(length > 44);
+  el.message.dataset.short = String(length <= 22);
 
   // Replay the landing only when the holder actually changed hands.
   const landed = holder?.txHash && holder.txHash !== previous?.holder?.txHash;
@@ -294,11 +296,24 @@ function listen() {
   };
 
   open();
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible') return;
+
+  const wake = () => {
     resync();
     if (stream?.readyState === 2) open();
-  });
+  };
+  // A WebView host does not reliably raise visibilitychange when the wallet
+  // app comes back to the front, so every way back is treated as a return.
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
+  addEventListener('focus', wake);
+  addEventListener('pageshow', wake);
+
+  /*
+   * Belt and braces. The stream is the fast path, but a deploy drops it, a
+   * suspended WebView silently loses it, and the reconnect can sit in backoff.
+   * Polling state on a timer means the screen is never more than a few
+   * seconds behind whatever happens, and it is one small read per tick.
+   */
+  setInterval(() => resync(), 8_000);
 }
 
 async function resync() {

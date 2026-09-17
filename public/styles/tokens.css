@@ -40,6 +40,8 @@
   --base: 15px;
   --figure: clamp(2.5rem, 1.6rem + 4.4vw, 3.4rem);
   --title: clamp(2.1rem, 1.2rem + 4.6vw, 3.1rem);
+  /* A message short enough to fit on a line or two is the whole screen. */
+  --title-short: clamp(3.4rem, 1.4rem + 11vw, 5.2rem);
   --title-long: clamp(1.45rem, 0.9rem + 2.8vw, 2rem);
 
   --gutter: 20px;
