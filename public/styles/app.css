@@ -110,6 +110,27 @@ a { color:inherit; }
   border-bottom:1px solid var(--ink);
 }
 .hero-note { font-size:var(--base); color:var(--ink-soft); max-width:26ch; }
+
+/* The poster's name, stamped on like a tag: orange block, display face, a
+   degree off square so it reads as applied rather than typeset. */
+.who {
+  display:inline-block;
+  margin-left:2px;
+  padding:3px 9px 4px;
+  background:var(--orange); color:var(--sheet);
+  font-family:var(--font-display); font-weight:700;
+  font-size:1.05em; line-height:1; letter-spacing:-0.02em;
+  transform:rotate(-1.5deg);
+  transform-origin:left center;
+  box-shadow:2px 2px 0 var(--ink);
+}
+@keyframes stamp {
+  0% { transform:rotate(-8deg) scale(1.6); opacity:0; }
+  55% { transform:rotate(-1.5deg) scale(0.96); opacity:1; }
+  100% { transform:rotate(-1.5deg) scale(1); }
+}
+.who[data-stamp='true'] { animation:stamp 520ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+@media (prefers-reduced-motion:reduce) { .who[data-stamp='true'] { animation:none; } }
 .hero-title {
   grid-row:3;
   font-family:var(--font-display); font-weight:700;

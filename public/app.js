@@ -62,6 +62,23 @@ function countTo(node, to) {
   requestAnimationFrame(step);
 }
 
+/** True when this render is the one where the holder changed hands. */
+function landedNow(holder, previous) {
+  return Boolean(holder?.txHash && holder.txHash !== previous?.holder?.txHash);
+}
+
+/**
+ * "Posted by" as quiet text, the name as a stamped orange tag. Built from nodes
+ * rather than markup: the name is user supplied, sanitised or not.
+ */
+function byline(name, stamp) {
+  const who = document.createElement('b');
+  who.className = 'who';
+  who.textContent = name;
+  if (stamp) who.dataset.stamp = 'true';
+  el.holder.replaceChildren('Posted by ', who);
+}
+
 function payday(amount) {
   const toast = document.createElement('div');
   toast.className = 'payday';
@@ -95,9 +112,7 @@ function render(next) {
 
   if (holder) {
     el.message.textContent = holder.message;
-    el.holder.textContent = mine
-      ? 'Posted by you'
-      : `Posted by ${holder.name || shortAddress(holder.address)}`;
+    byline(mine ? 'you' : (holder.name || shortAddress(holder.address)), landedNow(holder, previous));
     el.state.hidden = false;
     el.state.className = holder.settled ? 'tag tag-live' : 'tag tag-ghost';
     el.state.textContent = holder.settled ? 'Confirmed' : 'Confirming';
