@@ -51,6 +51,7 @@ function view() {
     winners: slot.winners.slice(0, 12),
     totals: { ...slot.totals, wallets: slot.totals.wallets.size },
     floor: FLOOR,
+    watching: 4,
     serverTime: Date.now(),
   };
 }

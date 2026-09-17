@@ -17,7 +17,7 @@ import { createFire, heatFrom } from './fire.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
-  slot: $('slot'), fire: $('fire'), day: $('day'), stamp: $('stamp'), state: $('state'),
+  slot: $('slot'), fire: $('fire'), day: $('day'), stamp: $('stamp'), state: $('state'), watching: $('watching'),
   message: $('message'), holder: $('holder'),
   price: $('price'), payout: $('payout'),
   clock: $('clock'),
@@ -89,6 +89,9 @@ function render(next) {
   const mine = holder && address && normaliseAddress(holder.address) === address;
 
   el.day.textContent = `Day ${next.round}`;
+  // Other people, here now. Shown from two upward: a count of one is just you.
+  el.watching.hidden = !(next.watching >= 2);
+  el.watching.textContent = `${formatNim(next.watching ?? 0)} watching`;
 
   if (holder) {
     el.message.textContent = holder.message;
@@ -122,7 +125,7 @@ function render(next) {
     const wasMine = previous?.holder && address && normaliseAddress(previous.holder.address) === address;
     if (wasMine) {
       payday(holder.paid);
-      say(`Someone replaced your message. You received ${formatNim(holder.paid)} NIM.`, 'paid');
+      say(`Someone replaced your message. You received ${formatNim(holder.paid)} NIM. Post again for ${formatNim(next.price)} NIM.`, 'paid');
     }
   }
 
@@ -130,7 +133,7 @@ function render(next) {
   countTo(el.payout, next.payout);
 
   renderTape(next.events, previous?.events);
-  renderWinners(next.winners?.slice(0, 3));
+  renderWinners(next.winners?.slice(0, 6));
   renderTotals(next.totals);
   tick();
   renderAction();
@@ -143,7 +146,7 @@ function renderWinners(winners) {
     const li = document.createElement('li');
     const n = document.createElement('span');
     n.className = 'n';
-    n.textContent = String(win.round).padStart(2, '0');
+    n.textContent = String(win.round);
     const message = document.createElement('span');
     message.className = 'm';
     message.textContent = win.message;

@@ -187,6 +187,7 @@ export class Slot {
         wallets: slot.totals.wallets.length,
       },
       floor: this.floor,
+      watching: this.clients.size,
       serverTime: now,
     };
   }
@@ -328,7 +329,10 @@ export class Slot {
    * A day with no holder still advances. Nobody wins a day nobody played.
    */
   private closeDay(slot: Stored, at: number): void {
-    if (slot.holder) {
+    // Only a message posted during the day can win it. Otherwise a quiet day
+    // would hand the same holder a fresh entry in the hall of fame for nothing.
+    const playedToday = slot.holder !== null && slot.holder.takenAt > at - DAY_MS;
+    if (slot.holder && playedToday) {
       slot.winners.unshift({
         round: slot.round,
         address: slot.holder.address,
@@ -345,9 +349,14 @@ export class Slot {
         from: null, fromName: null, amount: slot.holder.paidNim,
       });
     }
+    /*
+     * The winner keeps the slot. Their message stays up through the night and
+     * they are the one paid when somebody replaces it tomorrow. Clearing the
+     * holder made winning worth nothing but a line in a list; this makes it
+     * ownership until someone buys it off you at the floor.
+     */
     slot.round += 1;
     slot.priceNim = this.floor;
-    slot.holder = null;
     slot.claims = [];
   }
 
@@ -482,12 +491,13 @@ export class Slot {
     this.clients.add(writer);
 
     const slot = await this.tick(await this.load());
-    this.send(writer, this.view(slot));
+    // Everyone, not just the newcomer: the count of people watching just changed.
+    this.broadcast(slot);
 
     const heartbeat = setInterval(() => {
       writer.write(this.encoder.encode(': ping\n\n')).catch(() => {
         clearInterval(heartbeat);
-        this.clients.delete(writer);
+        this.dropped(writer);
       });
     }, 25_000);
 
@@ -507,8 +517,14 @@ export class Slot {
    */
   private send(writer: WritableStreamDefaultWriter<Uint8Array>, payload: unknown): void {
     writer.write(this.encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)).catch(() => {
-      this.clients.delete(writer);
+      this.dropped(writer);
     });
+  }
+
+  /** A stream went away. Tell the rest, on the next tick so a dead writer cannot recurse. */
+  private dropped(writer: WritableStreamDefaultWriter<Uint8Array>): void {
+    if (!this.clients.delete(writer)) return;
+    setTimeout(() => { this.load().then((slot) => this.broadcast(slot)).catch(() => {}); }, 0);
   }
 
   private broadcast(slot: Stored): void {
