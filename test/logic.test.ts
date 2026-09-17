@@ -204,3 +204,18 @@ test('backend is picked from the URL', () => {
   assert.ok(isRest('https://api.nimiq.watch/api/v1/'));
   assert.ok(!isRest('https://rpc.nimiqwatch.com'));
 });
+
+
+test('a REST memo arrives as hex, not base64, and still matches the claim', () => {
+  // The exact data field from the first real payment ever made to the app,
+  // testnet, 17 Sep 2026. Decoding it as base64 turned the token into noise.
+  const live = {
+    hash: 'x', receiver_address: 'NQ05 L4NV YHX4 S8QV 4HT3 TVUU JE8D 2SHD BH2Y',
+    value: '10000000', executed: 'True', confirmations: '87', block_height: '11685900',
+    data: '65356564366633626266396631613763',
+  };
+  const tx = readTx(live, 'rest', 5)!;
+  assert.equal(hexToUtf8(tx.recipientData), 'e5ed6f3bbf9f1a7c');
+  const claim = { token: 'e5ed6f3bbf9f1a7c', recipient: live.receiver_address, valueLuna: 10_000_000 };
+  assert.deepEqual(checkTx(tx, claim, 5), { ok: true });
+});

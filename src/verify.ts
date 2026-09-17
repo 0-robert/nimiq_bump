@@ -80,9 +80,21 @@ function truthy(value: unknown): boolean {
   return Boolean(value);
 }
 
-function base64ToHex(b64: string): string {
+/**
+ * The memo as hex, whatever the explorer sent.
+ *
+ * The REST explorer was documented as returning base64, and a real transaction
+ * proved otherwise: the memo came back as hex, the same as the RPC node. So a
+ * hex-shaped value is taken as hex, and base64 is only tried for anything else.
+ * Decoding a hex memo as base64 produced noise, and the server spent an hour
+ * comparing a real claim token against it.
+ */
+function memoToHex(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed === '') return '';
+  if (/^[0-9a-f]+$/i.test(trimmed) && trimmed.length % 2 === 0) return trimmed.toLowerCase();
   try {
-    return Array.from(atob(b64), (c) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+    return Array.from(atob(trimmed), (c) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
   } catch {
     return '';
   }
@@ -90,8 +102,8 @@ function base64ToHex(b64: string): string {
 
 /**
  * Field names differ between the JSON-RPC node and the REST explorer, and the
- * explorer sends every value as a string, its memo as base64 rather than hex,
- * and no network id at all. Everything is normalised to one shape here.
+ * explorer sends every value as a string, its memo as hex despite documentation
+ * saying base64, and no network id at all. Everything is normalised to one shape here.
  */
 export function readTx(raw: Record<string, unknown>, source: 'rpc' | 'rest', networkId: number): ChainTx | null {
   const hash = raw.hash ?? raw.transactionHash;
@@ -113,7 +125,7 @@ export function readTx(raw: Record<string, unknown>, source: 'rpc' | 'rest', net
     blockNumber: Number(raw.blockNumber ?? raw.block_height ?? 0),
     value: Number(raw.value ?? 0),
     confirmations: Number(raw.confirmations ?? 0),
-    recipientData: source === 'rest' ? base64ToHex(memo) : memo,
+    recipientData: source === 'rest' ? memoToHex(memo) : memo,
     executionResult,
     // The explorer carries no network field; the base URL already fixes which
     // network it is, so the configured id is taken as read.
