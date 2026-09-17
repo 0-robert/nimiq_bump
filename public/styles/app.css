@@ -8,20 +8,20 @@
 * { margin:0; }
 html { -webkit-text-size-adjust:100%; background:var(--field); }
 
-/* The dark field the sheet is trimmed from, dot-screened like a print proof. */
+/*
+  The field the sheet is trimmed from. Screened with small plus and dash marks
+  at two pitches, the way the reference dresses its black ground. Two layers at
+  unrelated tile sizes so the repeat stops reading as a repeat.
+*/
 body {
   min-height:100vh; min-height:100svh;
-  padding: max(10px, env(safe-area-inset-top)) 10px max(14px, env(safe-area-inset-bottom));
+  padding: max(0px, env(safe-area-inset-top)) 10px max(0px, env(safe-area-inset-bottom));
   background-color:var(--field);
-  /* Three screens at different pitches and offsets. A single regular grid reads
-     as a texture swatch; overlapping them at odd sizes breaks the repeat up
-     into something closer to a coarse halftone. */
   background-image:
-    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.16) 1.4px, transparent 0),
-    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.09) 1.2px, transparent 0),
-    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.05) 1px, transparent 0);
-  background-size: 17px 17px, 11px 11px, 29px 29px;
-  background-position: 0 0, 5px 7px, 13px 3px;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' fill='%23fff' fill-opacity='.2'%3E%3Cpath d='M6 8h6v2H6zM8 6h2v6H8zM34 9h8v2h-8zM54 6h2v2h-2zM58 6h2v2h-2zM22 38h6v2h-6zM24 36h2v6h-2zM46 41h6v2h-6zM8 56h2v2H8zM40 57h6v2h-6z'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' fill='%23fff' fill-opacity='.1'%3E%3Cpath d='M18 20h6v2h-6zM20 18h2v6h-2zM60 14h8v2h-8zM84 30h2v2h-2zM10 70h8v2h-8zM50 62h6v2h-6zM52 60h2v6h-2zM78 80h2v2h-2zM82 80h2v2h-2zM86 80h2v2h-2z'/%3E%3C/svg%3E");
+  background-size: 64px 64px, 96px 96px;
+  background-position: 0 0, 23px 41px;
   color:var(--ink);
   font-family:var(--font-body);
   font-size:var(--base);
@@ -34,96 +34,101 @@ canvas,svg { display:block; max-width:100%; }
 button,input,textarea { font:inherit; color:inherit; }
 [hidden] { display:none !important; }
 :focus-visible { outline:2px solid var(--orange); outline-offset:-2px; }
+a { color:inherit; }
 
 .sheet {
-  max-width:420px;
-  /* Margin on all four sides so the sheet reads as trimmed out of the field
-     rather than as the page itself. */
-  margin:clamp(14px, 4vw, 30px) auto;
+  max-width:440px;
+  margin:clamp(12px, 3vw, 40px) auto;
   background:var(--sheet);
 }
+@media (min-width:720px) { .sheet { max-width:480px; } }
 
-/* Every small label on the page speaks in this voice. */
-.lbl {
-  display:block;
-  font-family:var(--font-mono);
-  font-size:var(--micro);
-  font-weight:500;
-  letter-spacing:0.18em;
-  text-transform:uppercase;
-  color:var(--ink-faint);
+/* One voice for every section heading. Plain, small, sentence case. */
+.h {
+  font-family:var(--font-body); font-weight:400;
+  font-size:var(--small); line-height:1.3;
+  color:var(--ink-soft);
 }
 .num { font-variant-numeric:tabular-nums; font-feature-settings:'tnum' 1; }
 
-/* ---- masthead: black block, orange stripe, then the stamp ---- */
+/* ---- masthead: black block, orange block, then the clock ---- */
 
-.masthead { display:flex; align-items:stretch; border-bottom:1px solid var(--ink); }
+.masthead { display:flex; align-items:stretch; height:52px; border-bottom:1px solid var(--ink); }
 .mark {
   background:var(--ink); color:var(--sheet);
   font-family:var(--font-display); font-weight:700;
-  font-size:17px; letter-spacing:-0.05em;
-  padding:9px 12px;
+  font-size:19px; letter-spacing:-0.05em; line-height:1;
+  padding:0 16px;
   display:flex; align-items:center;
 }
-.stripe { width:22px; background:var(--orange); flex:none; }
+.day {
+  background:var(--orange); color:var(--ink);
+  padding:0 16px;
+  display:flex; align-items:center;
+  font-size:var(--base); white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
 .stamp {
   flex:1;
-  /* Not a flex container: flex trims the trailing space off a text run, which
-     ran "CLOSES" straight into the clock with nothing between them. */
-  align-self:center;
-  text-align:right;
-  padding:0 12px;
-  font-family:var(--font-mono); font-size:var(--micro);
-  letter-spacing:0.14em; text-transform:uppercase;
-  color:var(--ink-soft); font-variant-numeric:tabular-nums;
+  display:flex; align-items:center; justify-content:flex-end; gap:0.35em;
+  padding:0 var(--gutter);
+  font-size:var(--base); color:var(--ink-soft);
+  font-variant-numeric:tabular-nums; white-space:nowrap;
 }
-.stamp b { color:var(--ink); font-weight:500; }
+.stamp b { color:var(--ink); font-weight:400; }
 .stamp[data-urgent='true'] b { color:var(--orange); }
 
-/* ---- the slot ---- */
+/* ---- the panel: where the reference has its image strip, the fire ---- */
 
-.slot {
+.panel {
   position:relative; isolation:isolate;
-  background:var(--slot); color:var(--on-slot);
-  padding:14px 18px 54px;
-  min-height:270px;
+  height:116px;
+  background:var(--panel);
   overflow:hidden;
-  display:grid; grid-template-rows:auto 1fr auto; gap:14px;
 }
-.slot-fire { position:absolute; inset:auto 0 0 0; width:100%; height:56px; z-index:0; pointer-events:none; }
-.slot > *:not(.slot-fire) { position:relative; z-index:1; }
-
-.slot-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.slot-fire { position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
 /* Boxed micro labels, the way the reference tags its images. */
 .tag {
+  position:absolute; bottom:12px; z-index:1;
   font-family:var(--font-mono); font-size:var(--micro); font-weight:500;
-  letter-spacing:0.16em; text-transform:uppercase;
-  padding:3px 6px;
+  letter-spacing:0.12em; text-transform:uppercase; line-height:1;
+  padding:5px 7px;
   background:var(--sheet); color:var(--ink);
 }
-.tag-ghost { background:transparent; color:var(--on-slot-faint); box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.22); }
-.tag-live { background:var(--orange); color:var(--sheet); }
+.tag:first-of-type { left:12px; }
+#state { right:12px; }
+.tag-ghost { background:rgb(0 0 0 / 0.55); color:var(--on-panel); box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.35); }
+.tag-live { background:var(--orange); color:var(--ink); }
 
-.slot-message {
-  align-self:center;
-  text-align:center;
-  padding-inline:2px;
+/* ---- the hero: a short note, then the message set like a report title ---- */
+
+.hero {
+  display:grid; grid-template-rows:auto 1fr auto; gap:28px;
+  min-height:228px;
+  padding:18px var(--gutter) 22px;
+  border-bottom:1px solid var(--ink);
+}
+.hero-note { font-size:var(--base); color:var(--ink-soft); max-width:26ch; }
+.hero-title {
+  grid-row:3;
   font-family:var(--font-display); font-weight:700;
-  font-size:var(--message); line-height:0.94; letter-spacing:-0.05em;
+  font-size:var(--title); line-height:0.98; letter-spacing:-0.045em;
   text-wrap:balance; overflow-wrap:anywhere;
 }
-.slot-holder { text-align:center; font-family:var(--font-mono); font-size:var(--micro); letter-spacing:0.14em; text-transform:uppercase; color:var(--on-slot-faint); }
+.hero-title[data-long='true'] { font-size:var(--title-long); line-height:1.06; letter-spacing:-0.035em; }
 
 /* ---- figures ---- */
 
-.figs { display:grid; grid-template-columns:1fr 1fr; }
-.fig { padding:12px 18px 13px; border-bottom:1px solid var(--ink); }
+.figs { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--ink); }
+.fig { padding:16px var(--gutter) 18px; display:grid; grid-template-rows:auto 1fr; align-items:end; }
 .fig + .fig { border-left:1px solid var(--rule); }
+.fig .h { margin-bottom:8px; }
+.fig .row { display:flex; align-items:baseline; gap:6px; }
 .fig b {
-  display:block; margin-top:1px;
   font-family:var(--font-display); font-weight:700;
-  font-size:var(--figure); line-height:0.88; letter-spacing:-0.06em;
+  font-size:var(--figure); line-height:0.9; letter-spacing:-0.05em;
 }
+.fig .unit { font-size:var(--small); color:var(--ink-soft); }
 .fig-price b { color:var(--orange); }
 
 /* ---- action ---- */
@@ -131,118 +136,119 @@ button,input,textarea { font:inherit; color:inherit; }
 .actions { display:grid; }
 .btn {
   position:relative; overflow:hidden;
-  display:block; width:100%;
-  min-height:50px; padding:15px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  width:100%;
+  min-height:56px; padding:0 var(--gutter);
   border:0; border-radius:0;
-  background:var(--ink); color:var(--sheet);
-  font-family:var(--font-mono); font-size:var(--small); font-weight:500;
-  letter-spacing:0.18em; text-transform:uppercase;
+  background:var(--orange); color:var(--ink);
+  font-size:var(--base); text-align:left;
   cursor:pointer;
-  transition:background-color var(--dur) var(--ease);
+  transition:background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.btn:hover:not(:disabled), .btn:active:not(:disabled) { background:var(--orange); }
+.btn .plus { font-size:22px; line-height:1; font-weight:400; }
+.btn:hover:not(:disabled), .btn:active:not(:disabled) { background:var(--ink); color:var(--sheet); }
 .btn:disabled { background:var(--sheet-2); color:var(--ink-faint); cursor:not-allowed; }
+.btn:disabled .plus { visibility:hidden; }
 
 .btn::after {
   content:''; position:absolute; inset:0;
-  background:linear-gradient(100deg, transparent 42%, rgb(255 77 23 / 0.55) 50%, transparent 58%);
+  background:linear-gradient(100deg, transparent 42%, rgb(255 255 255 / 0.45) 50%, transparent 58%);
   transform:translateX(-130%);
+  pointer-events:none;
 }
 .btn[data-sheen='true']::after { animation:sheen 3.4s var(--ease) infinite; }
 @keyframes sheen { 0%,60% { transform:translateX(-130%); } 100% { transform:translateX(130%); } }
 
-.compose { display:grid; gap:7px; padding:12px; background:var(--sheet-2); border-bottom:1px solid var(--ink); }
+.compose { display:grid; gap:10px; padding:16px var(--gutter) 14px; border-bottom:1px solid var(--ink); }
 .compose input, .compose textarea {
-  width:100%; padding:8px 9px; border:0; border-radius:0;
+  width:100%; padding:12px 12px; border:0; border-radius:0;
   background:var(--sheet); color:var(--ink);
   box-shadow:inset 0 0 0 1px var(--rule); resize:none;
+  font-size:var(--base); line-height:1.4;
 }
-.compose input { font-family:var(--font-mono); font-size:var(--small); }
-.compose textarea { min-height:64px; }
-.compose :is(input,textarea):focus { box-shadow:inset 0 0 0 1.5px var(--orange); outline:none; }
+.compose textarea { min-height:96px; }
+.compose :is(input,textarea):focus { box-shadow:inset 0 0 0 1.5px var(--ink); outline:none; }
 .compose ::placeholder { color:var(--ink-faint); }
 .compose footer { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.count { font-family:var(--font-mono); font-size:var(--micro); letter-spacing:0.1em; color:var(--ink-faint); }
+.count { font-size:var(--small); color:var(--ink-faint); font-variant-numeric:tabular-nums; }
 .count[data-over='true'] { color:var(--orange); }
 .btn-quiet {
-  width:auto; min-height:28px; padding:5px 10px;
-  background:transparent; color:var(--ink-soft);
-  box-shadow:inset 0 0 0 1px var(--rule);
-  letter-spacing:0.14em;
+  width:auto; min-height:36px; padding:0 14px;
+  background:transparent; color:var(--ink);
+  box-shadow:inset 0 0 0 1px var(--ink);
+  font-size:var(--small);
 }
 .btn-quiet:hover { background:var(--ink); color:var(--sheet); }
 
-.status { padding:10px 18px; border-bottom:1px solid var(--rule); font-size:var(--small); color:var(--ink-soft); }
+.status { padding:12px var(--gutter); border-bottom:1px solid var(--rule); font-size:var(--small); color:var(--ink-soft); }
 .status[data-tone='paid'] { color:var(--up); }
 .status[data-tone='live'], .status[data-tone='error'] { color:var(--orange); }
 
 /* ---- the worked example ---- */
 
 /*
-  Four lines instead of two paragraphs. The mechanic is counterintuitive
+  Five lines instead of two paragraphs. The mechanic is counterintuitive
   enough that naming two people and showing the arithmetic lands it faster
   than any amount of explaining.
 */
-.works { border-top:1px solid var(--rule); }
-.works > .lbl { padding:14px 18px 7px; }
-.works ol { margin:0; padding:0 18px 11px; list-style:none; display:grid; gap:5px; }
+.works, .block { padding:20px var(--gutter) 22px; border-bottom:1px solid var(--rule); }
+.works .h, .block .h { margin-bottom:12px; }
+.works ol, .block ul { margin:0; padding:0; list-style:none; }
+.works ol { display:grid; gap:8px; }
 .works li {
-  display:grid; grid-template-columns:1fr auto; gap:10px;
-  font-family:var(--font-mono); font-size:var(--small);
+  display:grid; grid-template-columns:1fr auto; gap:12px;
   align-items:baseline;
 }
-.works .v { font-variant-numeric:tabular-nums; font-weight:500; }
-.works li[data-accent='in'] .v { color:var(--ink); }
+.works .v { font-variant-numeric:tabular-nums; }
 .works li[data-accent='up'] .v { color:var(--up); }
-.works li[data-accent='top'] { color:var(--orange); }
-.works .note { padding:0 18px 14px; font-size:var(--small); color:var(--ink-faint); }
+.works li:last-child span:first-child { color:var(--ink-soft); }
 
 /* ---- lists ---- */
 
-.block > .lbl { padding:14px 18px 6px; }
-.block ul { margin:0; padding:0; list-style:none; }
-.block li { padding:6px 18px; }
+.block ul { display:grid; gap:10px; }
 
-.tape li { display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:baseline; font-size:var(--small); }
+.tape li { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:baseline; }
 .tape li[data-kind='idle'] { grid-template-columns:1fr; color:var(--ink-faint); }
-.tape .t { font-family:var(--font-mono); font-size:var(--micro); color:var(--ink-faint); font-variant-numeric:tabular-nums; }
-.tape .what { color:var(--ink-soft); overflow-wrap:anywhere; }
-.tape .amt { font-family:var(--font-mono); font-size:var(--small); font-variant-numeric:tabular-nums; color:var(--up); }
+.tape .t { font-size:var(--small); color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+.tape .what { color:var(--ink); overflow-wrap:anywhere; }
+.tape .amt { font-variant-numeric:tabular-nums; color:var(--up); }
 .tape li[data-kind='open'] .amt { color:var(--ink-faint); }
 .tape li[data-kind='won'] .amt, .tape li[data-kind='won'] .what { color:var(--orange); }
 @keyframes tick-in { from { opacity:0; } to { opacity:1; } }
 .tape li[data-fresh='true'] { animation:tick-in 240ms var(--ease); }
 
-.past li { display:grid; grid-template-columns:auto 1fr; gap:1px 10px; }
-.past .n { grid-row:span 2; align-self:start; font-family:var(--font-mono); font-size:var(--micro); color:var(--orange); padding-top:3px; }
-.past .m { font-weight:500; overflow-wrap:anywhere; }
-.past .meta { font-family:var(--font-mono); font-size:var(--micro); letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint); }
+.past ul { gap:14px; }
+.past li { display:grid; grid-template-columns:auto 1fr; gap:2px 14px; }
+.past .n { grid-row:span 2; align-self:start; font-size:var(--small); color:var(--ink-faint); font-variant-numeric:tabular-nums; padding-top:2px; }
+.past .m { font-family:var(--font-display); font-weight:700; font-size:18px; line-height:1.15; letter-spacing:-0.02em; overflow-wrap:anywhere; }
+.past .meta { font-size:var(--small); color:var(--ink-soft); }
 
+/* The credit line. The one other place mono is allowed, as in the reference. */
 .foot {
-  padding:14px 18px 16px;
-  border-top:1px solid var(--rule);
-  font-family:var(--font-mono); font-size:var(--micro);
-  letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint);
-  display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  padding:18px var(--gutter) 20px;
+  border-top:1px solid var(--ink);
+  font-family:var(--font-mono); font-size:var(--micro); font-weight:500;
+  letter-spacing:0.08em; text-transform:uppercase; line-height:1.5; color:var(--ink-soft);
+  display:flex; justify-content:space-between; align-items:flex-end; gap:16px;
 }
-.foot a { color:var(--ink-soft); }
+.foot a { color:var(--ink); text-decoration:none; white-space:nowrap; }
+.foot a:hover { text-decoration:underline; }
 
 /* ---- the landing ---- */
 
-@keyframes cut { from { background:var(--orange); } to { background:var(--slot); } }
-.slot[data-landed='true'] { animation:cut 560ms var(--ease); }
+@keyframes cut { from { background:var(--orange); } to { background:var(--panel); } }
+.panel[data-landed='true'] { animation:cut 560ms var(--ease); }
 @keyframes lift { from { transform:translateY(0.2em); opacity:0; } to { transform:none; opacity:1; } }
 .fig b[data-changed='true'] { animation:lift 320ms var(--ease); }
 @keyframes payday { 0% { transform:translateY(100%); } 14%,86% { transform:none; } 100% { transform:translateY(100%); } }
 .payday {
   position:fixed; left:0; right:0; bottom:0; z-index:30;
-  padding:13px; background:var(--up); color:var(--sheet);
-  font-family:var(--font-mono); font-size:var(--small); font-weight:500;
-  letter-spacing:0.16em; text-transform:uppercase; text-align:center;
+  padding:16px; background:var(--up); color:var(--sheet);
+  font-size:var(--base); text-align:center; font-variant-numeric:tabular-nums;
   animation:payday 3.4s var(--ease) forwards;
 }
 
 @media (prefers-reduced-motion:reduce) {
-  .slot[data-landed='true'], .fig b[data-changed='true'], .tape li[data-fresh='true'], .payday { animation:none; }
+  .panel[data-landed='true'], .fig b[data-changed='true'], .tape li[data-fresh='true'], .payday { animation:none; }
   .btn[data-sheen='true']::after { animation:none; }
 }

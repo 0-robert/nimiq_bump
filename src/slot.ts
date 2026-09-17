@@ -222,23 +222,23 @@ export class Slot {
     const bidder = normaliseAddress(body.address ?? '');
     const name = sanitiseName(body.name ?? '');
 
-    if (!message) return this.fail(400, 'no-message', 'Write something first.');
+    if (!message) return this.fail(400, 'no-message', 'Enter a message first.');
     if (message.length > MAX_MESSAGE_LENGTH) {
-      return this.fail(400, 'too-long', `Keep it under ${MAX_MESSAGE_LENGTH} characters.`);
+      return this.fail(400, 'too-long', `Messages are limited to ${MAX_MESSAGE_LENGTH} characters.`);
     }
     if ((body.name ?? '').trim() && !name) {
-      return this.fail(400, 'bad-name', `Pick a name of ${MAX_NAME_LENGTH} characters or fewer, and not a wallet address.`);
+      return this.fail(400, 'bad-name', `Names are limited to ${MAX_NAME_LENGTH} characters and cannot be a wallet address.`);
     }
-    if (!/^NQ[0-9A-Z]{34}$/.test(bidder)) return this.fail(400, 'bad-address', 'That address does not look right.');
+    if (!/^NQ[0-9A-Z]{34}$/.test(bidder)) return this.fail(400, 'bad-address', 'Invalid wallet address.');
 
     const slot = await this.tick(await this.load());
     const now = Date.now();
 
     if (this.lock(slot)) {
-      return this.fail(409, 'locked', 'Someone else is bumping right now. Give it a few seconds.');
+      return this.fail(409, 'locked', 'Someone else is paying right now. Try again in a few seconds.');
     }
     if (slot.holder && addressesMatch(slot.holder.address, bidder)) {
-      return this.fail(409, 'already-yours', 'You already have it. Let someone take it off you.');
+      return this.fail(409, 'already-yours', 'Your message is already up.');
     }
 
     // Screen before the wallet is ever opened, so a blocked message costs nobody
@@ -248,7 +248,7 @@ export class Slot {
 
     const recipient = this.payee(slot);
     if (addressesMatch(recipient, bidder)) {
-      return this.fail(409, 'self-pay', 'You would be paying yourself. Wait for someone else to take it.');
+      return this.fail(409, 'self-pay', 'You cannot replace your own message.');
     }
 
     const issued: ActiveClaim = {

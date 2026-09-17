@@ -98,7 +98,7 @@ setInterval(() => { if (Date.now() >= slot.closesAt) closeDay(); }, 500);
 /** Someone takes it back off you, so the payout moment is part of the demo. */
 function scheduleRival() {
   setTimeout(() => {
-    if (slot.holder && slot.holder.address === ME) take(RIVAL, 'taken off you, and you just got paid');
+    if (slot.holder && slot.holder.address === ME) take(RIVAL, 'anyone up for lunch at 1?');
   }, 9000);
 }
 
@@ -106,7 +106,7 @@ export function install() {
   const banner = document.createElement('p');
   banner.className = 'status';
   banner.dataset.tone = 'live';
-  banner.textContent = 'Preview mode. A stand-in wallet, no real NIM, nothing sent to the chain.';
+  banner.textContent = 'Preview mode with a test wallet. No real NIM is used.';
   // Appended, not prepended: this is a footnote about the demo, and it was
   // the first thing anyone read when it sat above the masthead.
   (document.querySelector('.sheet') ?? document.body).append(banner);

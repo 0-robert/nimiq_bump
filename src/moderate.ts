@@ -23,7 +23,7 @@ export interface Verdict {
 
 export async function screen(env: Env, message: string): Promise<Verdict> {
   if (OBVIOUS.some((pattern) => pattern.test(message))) {
-    return { ok: false, reason: 'Links and anything that smells like a wallet scam are not allowed.' };
+    return { ok: false, reason: 'Links and wallet requests are not allowed.' };
   }
 
   if (!env.AI) return { ok: true, reason: '' };
@@ -35,7 +35,7 @@ export async function screen(env: Env, message: string): Promise<Verdict> {
 
     const verdict = String((result as { response?: string })?.response ?? '').toLowerCase();
     if (verdict.includes('unsafe')) {
-      return { ok: false, reason: 'That one will not go up. Try saying it another way.' };
+      return { ok: false, reason: 'That message was rejected. Try different wording.' };
     }
     return { ok: true, reason: '' };
   } catch {

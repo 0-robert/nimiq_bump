@@ -1,10 +1,12 @@
 /*
   Design tokens.
 
-  Modelled on the AiiD reference: a white sheet trimmed out of a dark,
-  dot-screened field, a black masthead block with one orange stripe beside it,
-  an enormous tight neo-grotesque doing the work, and micro labels set in mono.
-  Hard rectangles throughout. Nothing rounded, nothing floating, no shadows.
+  Modelled on the AiiD reference: a white sheet trimmed out of a black field
+  screened with small plus and dash marks, a black masthead block with one
+  orange block beside it, a large tight neo-grotesque doing the work, plain
+  sentence-case sans for everything you read, and mono reserved for the boxed
+  tags on the image panel and the credit line at the foot. Hard rectangles
+  throughout. Nothing rounded, nothing floating, no shadows.
 
   The display face is Geist rather than the Helvetica Now in the reference,
   which is licensed and cannot ship in a public MIT repo.
@@ -13,30 +15,34 @@
 :root {
   color-scheme: light;
 
-  --field: #0b0b0c;      /* the dark ground the sheet is trimmed from */
+  --field: #000000;      /* the dark ground the sheet is trimmed from */
+  --field-mark: #ffffff; /* the screen of marks over it */
   --sheet: #ffffff;
-  --sheet-2: #f1efea;
-  --ink: #0b0b0c;
-  --ink-soft: #55565a;
-  --ink-faint: #93949a;
-  --rule: #ddd9d2;
+  --sheet-2: #f3f3f1;
+  --ink: #000000;
+  --ink-soft: #5f5f5f;
+  --ink-faint: #9b9b9b;
+  --rule: #e4e4e2;
 
-  --slot: #0b0b0c;
-  --on-slot: #ffffff;
-  --on-slot-faint: #86878c;
+  --panel: #000000;
+  --on-panel: #ffffff;
+  --on-panel-faint: #8a8a8a;
 
-  --orange: #ff4d17;
-  --up: #12805f;
+  --orange: #ff5a1f;
+  --up: #1c7f57;
 
   --font-display: 'Geist', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 
-  --micro: 9.5px;
-  --small: 12px;
-  --base: 13.5px;
-  --figure: clamp(2.7rem, 1.9rem + 4vw, 4rem);
-  --message: clamp(1.75rem, 1.3rem + 2.2vw, 2.6rem);
+  --micro: 10px;
+  --small: 13px;
+  --base: 15px;
+  --figure: clamp(2.5rem, 1.6rem + 4.4vw, 3.4rem);
+  --title: clamp(2.1rem, 1.2rem + 4.6vw, 3.1rem);
+  --title-long: clamp(1.45rem, 0.9rem + 2.8vw, 2rem);
+
+  --gutter: 20px;
 
   --dur: 320ms;
   --ease: cubic-bezier(0.16, 0.84, 0.28, 1);

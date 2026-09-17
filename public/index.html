@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BUMP</title>
-<meta name="description" content="One slot, shared by everyone. Take it by paying 1.5x, and the holder you took it from gets the money.">
-<meta name="theme-color" content="#0b0b0c">
+<meta name="description" content="One message, shared by everyone. Replace it by paying 1.5x. The previous poster gets the money.">
+<meta name="theme-color" content="#000000">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/geist-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/mono-500.woff2" as="font" type="font/woff2" crossorigin>
@@ -16,28 +16,29 @@
 
   <header class="masthead">
     <h1 class="mark">BUMP</h1>
-    <span class="stripe" aria-hidden="true"></span>
-    <span class="stamp" id="stamp" data-urgent="false">Day 1 / Closes <b id="clock">&mdash;</b></span>
+    <span class="day" id="day">Day 1</span>
+    <span class="stamp" id="stamp" data-urgent="false">Closes <b id="clock">&mdash;</b></span>
   </header>
 
-  <section class="slot" id="slot">
+  <section class="panel" id="slot" aria-label="The slot">
     <canvas class="slot-fire" id="fire" aria-hidden="true"></canvas>
-    <div class="slot-head">
-      <span class="tag">On the slot</span>
-      <span class="tag tag-ghost" id="state" hidden>Settling</span>
-    </div>
-    <p class="slot-message" id="message">Nobody has it yet</p>
-    <p class="slot-holder" id="holder">Open to anyone</p>
+    <span class="tag">Current message</span>
+    <span class="tag tag-ghost" id="state" hidden>Confirming</span>
+  </section>
+
+  <section class="hero">
+    <p class="hero-note" id="holder">Nothing posted yet today</p>
+    <p class="hero-title" id="message">Post your message for 100 NIM</p>
   </section>
 
   <div class="figs">
     <div class="fig fig-price">
-      <span class="lbl">Price</span>
-      <b class="num" id="price">100</b>
+      <h2 class="h">Price</h2>
+      <p class="row"><b class="num" id="price">100</b><span class="unit">NIM</span></p>
     </div>
     <div class="fig fig-payout">
-      <span class="lbl">They get</span>
-      <b class="num" id="payout">150</b>
+      <h2 class="h">Paid to you if replaced</h2>
+      <p class="row"><b class="num" id="payout">150</b><span class="unit">NIM</span></p>
     </div>
   </div>
 
@@ -46,15 +47,16 @@
       <input id="name" type="text" maxlength="16" autocomplete="nickname"
         spellcheck="false" placeholder="Your name (optional)" aria-label="Your name">
       <textarea id="draft" maxlength="140" rows="3"
-        placeholder="Say something. Everyone in the app sees it."
+        placeholder="Write your message"
         aria-label="Your message"></textarea>
       <footer>
-        <span class="count" id="count" data-over="false">140 left</span>
-        <button class="btn btn-quiet" id="cancel" type="button">Back</button>
+        <span class="count" id="count" data-over="false">140 characters left</span>
+        <button class="btn btn-quiet" id="cancel" type="button">Cancel</button>
       </footer>
     </div>
     <button class="btn" id="action" type="button">
       <span id="action-label">Connect wallet</span>
+      <span class="plus" aria-hidden="true">+</span>
     </button>
   </div>
 
@@ -62,29 +64,28 @@
 
   <!-- The arithmetic, not an explanation of it. -->
   <section class="works">
-    <span class="lbl">How it works</span>
+    <h2 class="h">How it works</h2>
     <ol>
-      <li data-accent="in"><span>Bob takes the slot</span><span class="v">100</span></li>
-      <li data-accent="in"><span>Alice takes it off Bob</span><span class="v">150</span></li>
-      <li data-accent="up"><span>Bob walks away with</span><span class="v">+50</span></li>
-      <li data-accent="top"><span>Alice is on the slot now</span><span class="v">&rarr;</span></li>
-      <li data-accent="in"><span>Whoever holds it at close keeps it</span><span class="v">&infin;</span></li>
+      <li><span>Bob posts a message</span><span class="v">100 NIM</span></li>
+      <li><span>Alice replaces it. Her payment goes to Bob</span><span class="v">150 NIM</span></li>
+      <li data-accent="up"><span>Bob's profit</span><span class="v">+50 NIM</span></li>
+      <li><span>The day closes at 19:00 UTC. The last message stays up permanently</span><span class="v"></span></li>
     </ol>
   </section>
 
   <section class="block tape" id="tape">
-    <span class="lbl">Today</span>
+    <h2 class="h">Activity</h2>
     <ul id="events"></ul>
   </section>
 
   <section class="block past" id="past" hidden>
-    <span class="lbl">Kept for good</span>
+    <h2 class="h">Previous days</h2>
     <ul id="winners"></ul>
   </section>
 
   <p class="foot">
     <span id="totals">Nimiq Mini Apps Competition</span>
-    <a href="https://github.com/0-robert/bump">Source &middot; MIT</a>
+    <a href="https://github.com/0-robert/bump">Source code</a>
   </p>
 
 </main>

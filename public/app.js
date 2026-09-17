@@ -17,7 +17,7 @@ import { createFire, heatFrom } from './fire.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
-  slot: $('slot'), fire: $('fire'), stamp: $('stamp'), state: $('state'),
+  slot: $('slot'), fire: $('fire'), day: $('day'), stamp: $('stamp'), state: $('state'),
   message: $('message'), holder: $('holder'),
   price: $('price'), payout: $('payout'),
   clock: $('clock'),
@@ -88,27 +88,29 @@ function render(next) {
   const holder = next.holder;
   const mine = holder && address && normaliseAddress(holder.address) === address;
 
-  el.stamp.firstChild.textContent = `Day ${next.round} / Closes `;
+  el.day.textContent = `Day ${next.round}`;
 
   if (holder) {
     el.message.textContent = holder.message;
     el.holder.textContent = mine
-      ? 'You have it'
-      : `Held by ${holder.name || shortAddress(holder.address)}`;
+      ? 'Posted by you'
+      : `Posted by ${holder.name || shortAddress(holder.address)}`;
     el.state.hidden = false;
     el.state.className = holder.settled ? 'tag tag-live' : 'tag tag-ghost';
-    el.state.textContent = holder.settled ? 'Settled' : 'Settling';
+    el.state.textContent = holder.settled ? 'Confirmed' : 'Confirming';
     el.state.title = holder.settled
-      ? 'Final. A macro block has confirmed it.'
-      : 'On chain. Waiting for the batch that makes it final.';
+      ? 'Confirmed on chain.'
+      : 'Waiting for final confirmation on chain.';
   } else {
     // An empty slot used to announce that nothing was happening, which is the
     // worst thing to show someone opening the app for the first time. It names
     // the price and what it buys instead.
-    el.message.textContent = `${formatNim(next.price)} NIM puts you here`;
-    el.holder.textContent = 'Open to anyone. Nobody has it yet';
+    el.message.textContent = `Post your message for ${formatNim(next.price)} NIM`;
+    el.holder.textContent = 'Nothing posted yet today';
     el.state.hidden = true;
   }
+  // A long message is set smaller so it still reads as one title, not a paragraph.
+  el.message.dataset.long = String(el.message.textContent.length > 44);
 
   // Replay the landing only when the holder actually changed hands.
   const landed = holder?.txHash && holder.txHash !== previous?.holder?.txHash;
@@ -120,7 +122,7 @@ function render(next) {
     const wasMine = previous?.holder && address && normaliseAddress(previous.holder.address) === address;
     if (wasMine) {
       payday(holder.paid);
-      say(`You were bumped. ${formatNim(holder.paid)} NIM is on its way to you.`, 'paid');
+      say(`Someone replaced your message. You received ${formatNim(holder.paid)} NIM.`, 'paid');
     }
   }
 
@@ -147,7 +149,7 @@ function renderWinners(winners) {
     message.textContent = win.message;
     const meta = document.createElement('span');
     meta.className = 'meta';
-    meta.textContent = `${win.name || shortAddress(win.address)} · ${formatNim(win.paidNim)} NIM`;
+    meta.textContent = `${win.name || shortAddress(win.address)} paid ${formatNim(win.paidNim)} NIM`;
     li.append(n, message, meta);
     return li;
   }));
@@ -158,7 +160,7 @@ const plural = (n, one) => `${formatNim(n)} ${n === 1 ? one : `${one}s`}`;
 function renderTotals(totals) {
   // Shares the footer line, so it always says something rather than vanishing.
   el.totals.textContent = totals?.bumps
-    ? `${plural(totals.bumps, 'bump')} · ${formatNim(totals.nimMoved)} NIM · ${plural(totals.wallets, 'wallet')}`
+    ? `${plural(totals.bumps, 'post')}, ${formatNim(totals.nimMoved)} NIM paid, ${plural(totals.wallets, 'wallet')}`
     : 'Nimiq Mini Apps Competition';
 }
 
@@ -190,7 +192,7 @@ function renderTape(events, previous) {
   // Hiding an empty tape left a hole where the page should have had a pulse.
   el.tape.hidden = false;
   if (!events?.length) {
-    el.events.replaceChildren(emptyRow('Nothing yet today. First bump opens it.'));
+    el.events.replaceChildren(emptyRow('No activity yet today.'));
     return;
   }
 
@@ -208,9 +210,9 @@ function renderTape(events, previous) {
     what.className = 'what';
     const actor = who(event.actorName, event.actor);
     what.textContent =
-      event.kind === 'won' ? `${actor} kept day ${event.day}`
-      : event.kind === 'open' ? `${actor} opened the day`
-      : `${actor} took it from ${who(event.fromName, event.from)}`;
+      event.kind === 'won' ? `${actor} held the last message of day ${event.day}`
+      : event.kind === 'open' ? `${actor} posted the first message`
+      : `${actor} replaced ${who(event.fromName, event.from)}`;
 
     const amount = document.createElement('span');
     amount.className = 'amt';
@@ -246,14 +248,14 @@ function renderAction() {
   if (!looksLikeNimiqPay()) { label.textContent = 'Open this in Nimiq Pay'; button.disabled = true; return; }
   if (!address) { label.textContent = 'Connect wallet'; return; }
   if (mode === 'paying') { label.textContent = 'Confirm in your wallet'; button.disabled = true; return; }
-  if (mode === 'waiting') { label.textContent = 'Waiting for the chain'; button.disabled = true; return; }
+  if (mode === 'waiting') { label.textContent = 'Waiting for confirmation'; button.disabled = true; return; }
 
   const mine = view?.holder && normaliseAddress(view.holder.address) === address;
-  if (mine) { label.textContent = 'It is yours for now'; button.disabled = true; return; }
+  if (mine) { label.textContent = 'Your message is up'; button.disabled = true; return; }
 
-  if (view?.locked && mode !== 'composing') { label.textContent = 'Someone is bumping'; button.disabled = true; return; }
+  if (view?.locked && mode !== 'composing') { label.textContent = 'Someone else is paying right now'; button.disabled = true; return; }
 
-  label.textContent = `Take it for ${formatNim(view?.price ?? 0)} NIM`;
+  label.textContent = view?.holder ? `Replace it for ${formatNim(view.price)} NIM` : `Post for ${formatNim(view?.price ?? 0)} NIM`;
   button.dataset.sheen = 'true';
 }
 
@@ -297,10 +299,10 @@ async function connect() {
   try {
     provider ??= await init({ timeout: 10_000 });
     address = normaliseAddress((await call(() => provider.listAccounts()))[0]);
-    say('Connected. Write something and take the slot.');
+    say('Wallet connected.');
     renderAction();
   } catch (error) {
-    say(error.code === 'PERMISSION_DENIED' ? 'No problem. Connect whenever you like.' : error.message);
+    say(error.code === 'PERMISSION_DENIED' ? 'Wallet not connected.' : error.message);
   }
 }
 
@@ -314,7 +316,7 @@ function compose() {
   renderAction();
 }
 
-function stopComposing(message = 'Rounds open at 100 NIM, about three cents.') {
+function stopComposing(message = '') {
   mode = 'idle';
   el.compose.hidden = true;
   say(message);
@@ -323,17 +325,17 @@ function stopComposing(message = 'Rounds open at 100 NIM, about three cents.') {
 
 function countDraft() {
   const left = MAX_MESSAGE - el.draft.value.length;
-  el.count.textContent = `${left} left`;
+  el.count.textContent = `${left} characters left`;
   el.count.dataset.over = String(left < 0);
 }
 
 async function bump() {
   const message = el.draft.value.trim();
-  if (!message) { say('Write something first.', 'error'); el.draft.focus(); return; }
+  if (!message) { say('Enter a message first.', 'error'); el.draft.focus(); return; }
 
   mode = 'paying';
   renderAction();
-  say('Setting up your bump.', 'live');
+  say('Preparing your payment.', 'live');
 
   let claim;
   try {
@@ -343,7 +345,7 @@ async function bump() {
       body: JSON.stringify({ message, address, name: el.name.value.trim() }),
     });
     claim = await response.json();
-    if (!response.ok) { stopComposing(); say(claim.message ?? 'That did not go through.', 'error'); return; }
+    if (!response.ok) { stopComposing(); say(claim.message ?? 'Something went wrong. Try again.', 'error'); return; }
   } catch {
     stopComposing();
     say('Could not reach the server. Try again in a moment.', 'error');
@@ -352,7 +354,7 @@ async function bump() {
 
   try { localStorage.setItem('bump.name', el.name.value.trim()); } catch { /* private mode */ }
 
-  say(`Confirm ${formatNim(claim.price)} NIM. It goes straight to the holder.`, 'live');
+  say(`Confirm ${formatNim(claim.price)} NIM in your wallet. It goes directly to the current poster.`, 'live');
 
   try {
     // The claim token rides along as the memo in plain UTF-8. Nimiq Pay hex
@@ -369,7 +371,7 @@ async function bump() {
     mode = 'composing';
     renderAction();
     say(
-      error.code === 'PERMISSION_DENIED' ? 'You backed out. The slot is open again.' : `That did not go through. ${error.message}`,
+      error.code === 'PERMISSION_DENIED' ? 'Payment cancelled.' : `Payment failed. ${error.message}`,
       error.code === 'PERMISSION_DENIED' ? 'plain' : 'error',
     );
     return;
@@ -382,7 +384,7 @@ async function bump() {
   el.draft.value = '';
   countDraft();
   renderAction();
-  say('Sent. Waiting for the chain to confirm it.', 'live');
+  say('Payment sent. Waiting for confirmation.', 'live');
 }
 
 async function release(token) {
