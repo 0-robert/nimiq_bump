@@ -1,0 +1,13 @@
+BUMP. One message slot for the whole app, and the loser cashes out.
+
+There is one message on screen and everyone sees the same one. You replace it by paying 1.25x whatever the last person paid. That money goes straight from your wallet to theirs, so the person you knocked off walks away with 25% more than they put in. The day closes at 19:00 UTC. Whoever is up at close keeps their message on the wall for good, and owns the slot overnight.
+
+Bob posts for 100. Alice replaces him for 125. Bob made 25 NIM for losing. Alice is up.
+
+Why I built it on Nimiq specifically: a busy day is twenty replacements, so twenty payments, each one wallet to wallet with nothing held in the middle. On most chains the fees would kill that before it started. Here a bid costs three cents and lands in a second, which is what makes a game out of it at all.
+
+The bit I spent the longest on is settlement. Nimiq's one second figure is inclusion, not finality. Micro blocks can be reorganised up to 59 deep, and Albatross writes failed transactions to the chain with the fee charged, so a transaction existing proves nothing. The slot changes hands as soon as the payment is included and says on its face that it is still confirming. Before the server treats it as final it checks the execution result, the recipient, the value, the network, the memo, and a full batch of confirmations. If a reorg ever undid one, the slot would go back.
+
+It runs at bump.robertsvassallo.workers.dev. Open it in Nimiq Pay through Mini Apps, then Custom URL. There is a testnet copy at bump-test.robertsvassallo.workers.dev if you want to try it with free NIM first. Code is on GitHub under MIT.
+
+Go and take it off me.
