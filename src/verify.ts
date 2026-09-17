@@ -234,3 +234,19 @@ export async function findPayment(
 
   return { status: 'pending' };
 }
+
+
+/**
+ * Whether a claim still describes the slot it was issued against.
+ *
+ * Stale means the slot moved on: somebody else is now the payee, or the price
+ * climbed past what the claim named. A price that fell, which happens at the
+ * daily close, does not make a claim stale: the payer paid at least what the
+ * slot now costs, to the right person, and is honoured at what they paid.
+ */
+export function claimIsStale(
+  claim: { priceNim: number; recipient: string },
+  now: { priceNim: number; payee: string },
+): boolean {
+  return !addressesMatch(claim.recipient, now.payee) || claim.priceNim < now.priceNim;
+}

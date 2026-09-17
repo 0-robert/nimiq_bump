@@ -7,7 +7,7 @@
  */
 
 import { addressesMatch, normaliseAddress, nextPrice, nimToLuna, sanitiseName, CLAIM_TOKEN_BYTES, MAX_NAME_LENGTH } from './nimiq.ts';
-import { findPayment, headBlock } from './verify.ts';
+import { findPayment, headBlock, claimIsStale } from './verify.ts';
 import { screen } from './moderate.ts';
 
 export const MAX_MESSAGE_LENGTH = 140;
@@ -373,7 +373,8 @@ export class Slot {
      */
     slot.round += 1;
     slot.priceNim = this.floor;
-    slot.claims = [];
+    // Claims are kept. One issued at 18:59 and paid at 19:00 still names the
+    // same payee and at least the new price, and is honoured at what it paid.
   }
 
   private record(slot: Stored, event: TapeEvent): void {
@@ -424,7 +425,7 @@ export class Slot {
        * previous holder and cannot be recalled without custody; the lock exists
        * to keep that window small.
        */
-      const stale = !alreadyApplied && (claim.priceNim !== slot.priceNim || !addressesMatch(claim.recipient, this.payee(slot)));
+      const stale = !alreadyApplied && claimIsStale(claim, { priceNim: slot.priceNim, payee: this.payee(slot) });
       if (stale) {
         slot.claims = slot.claims.filter((c) => c.token !== claim.token);
         changed = true;

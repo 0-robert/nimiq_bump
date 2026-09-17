@@ -5,7 +5,7 @@ import {
   nextPrice, payout, nimToLuna, normaliseAddress, addressesMatch,
   shortAddress, unwrap, toWalletError, hexToUtf8, WalletError, sanitiseName,
 } from '../src/nimiq.ts';
-import { checkTx, isFinal } from '../src/verify.ts';
+import { checkTx, isFinal, claimIsStale } from '../src/verify.ts';
 
 const HOLDER = 'NQ22 JV9P 548B JL00 TRKS GT1P X3QJ 52BV ENK3';
 
@@ -247,4 +247,14 @@ test('a poster called x is not profanity, and neither is the letter on its own',
     assert.ok(!hasProfanity(s), `false positive: ${s}`);
   assert.ok(hasProfanity('xxx'));
   assert.ok(hasProfanity('shiiiit'));
+});
+
+
+test('a claim is stale when the payee changed or the price rose, not when it fell', () => {
+  const claim = { priceNim: 157, recipient: HOLDER };
+  assert.ok(!claimIsStale(claim, { priceNim: 157, payee: HOLDER }), 'unchanged slot');
+  assert.ok(claimIsStale(claim, { priceNim: 197, payee: 'NQ07000000000000000000000000000000000' }), 'someone else bumped');
+  assert.ok(claimIsStale(claim, { priceNim: 197, payee: HOLDER }), 'price rose under the same payee');
+  // The daily close drops the price to the floor while the holder stays.
+  assert.ok(!claimIsStale(claim, { priceNim: 100, payee: HOLDER }), 'paid across the close');
 });
