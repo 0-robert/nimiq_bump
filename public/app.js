@@ -62,6 +62,43 @@ function countTo(node, to) {
   requestAnimationFrame(step);
 }
 
+/**
+ * The message, one span per character, so each can arrive on its own delay.
+ *
+ * Split on grapheme clusters, not code units, or an emoji or a combining mark
+ * would be cut in half. Spaces stay as plain text so the line still wraps at
+ * them. The whole line lands in a duration that scales with its length: a
+ * short message pops, a long one reads in, and neither drags.
+ */
+function setMessage(text, animate) {
+  // A re-render with the same message must not touch it: the confirmed
+  // update and the poll both arrive mid-animation and would cut it short.
+  if (!animate && el.message.textContent === text) return;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!animate || reduced) {
+    el.message.textContent = text;
+    el.message.dataset.animate = 'false';
+    return;
+  }
+  const units = typeof Intl?.Segmenter === 'function'
+    ? Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text), (s) => s.segment)
+    : Array.from(text);
+  const visible = units.filter((u) => u.trim()).length;
+  const total = Math.min(2200, Math.max(500, visible * 45));
+  const step = visible > 1 ? total / (visible - 1) : 0;
+
+  let i = 0;
+  el.message.replaceChildren(...units.map((unit) => {
+    if (!unit.trim()) return document.createTextNode(unit);
+    const span = document.createElement('span');
+    span.className = 'ch';
+    span.style.setProperty('--d', `${Math.round(i++ * step)}ms`);
+    span.textContent = unit;
+    return span;
+  }));
+  el.message.dataset.animate = 'true';
+}
+
 /** True when this render is the one where the holder changed hands. */
 function landedNow(holder, previous) {
   return Boolean(holder?.txHash && holder.txHash !== previous?.holder?.txHash);
@@ -111,7 +148,7 @@ function render(next) {
   el.watching.textContent = `${formatNim(next.watching ?? 0)} watching`;
 
   if (holder) {
-    el.message.textContent = holder.message;
+    setMessage(holder.message, landedNow(holder, previous));
     byline(mine ? 'you' : (holder.name || shortAddress(holder.address)), landedNow(holder, previous));
     el.state.hidden = false;
     el.state.className = holder.settled ? 'tag tag-live' : 'tag tag-ghost';
@@ -123,7 +160,7 @@ function render(next) {
     // An empty slot used to announce that nothing was happening, which is the
     // worst thing to show someone opening the app for the first time. It names
     // the price and what it buys instead.
-    el.message.textContent = `Post your message for ${formatNim(next.price)} NIM`;
+    setMessage(`Post your message for ${formatNim(next.price)} NIM`, false);
     el.holder.textContent = 'Nothing posted yet today';
     el.state.hidden = true;
   }
