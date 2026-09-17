@@ -116,3 +116,7 @@ npm run copycheck # screens all shipped copy for AI writing patterns
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
+
+The profanity list in `src/profanity.ts` is the English list from
+[LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words),
+used under CC BY 4.0.

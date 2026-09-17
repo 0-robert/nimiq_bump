@@ -219,3 +219,22 @@ test('a REST memo arrives as hex, not base64, and still matches the claim', () =
   const claim = { token: 'e5ed6f3bbf9f1a7c', recipient: live.receiver_address, valueLuna: 10_000_000 };
   assert.deepEqual(checkTx(tx, claim, 5), { ok: true });
 });
+
+import { hasProfanity } from '../src/moderate.ts';
+
+test('the two messages that reached the board on device are now refused', () => {
+  assert.ok(hasProfanity('shit'));
+  assert.ok(hasProfanity('Fuck everyone'));
+});
+
+test('evasions are folded flat before matching', () => {
+  for (const s of ['oh SHIT', 'sh1t happens', 's.h.i.t', 'shiiiit', 'f u c k this', 'what the f*ck']) {
+    assert.ok(hasProfanity(s), `missed: ${s}`);
+  }
+});
+
+test('ordinary words that merely contain a swear word pass', () => {
+  for (const s of ['class dismissed', 'the assassin', 'shitake mushrooms', 'scunthorpe united', 'hell yeah', 'damn good', 'anyone up for lunch at 1?', 'Hello!!']) {
+    assert.ok(!hasProfanity(s), `false positive: ${s}`);
+  }
+});

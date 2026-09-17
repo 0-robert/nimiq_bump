@@ -416,6 +416,21 @@ export class Slot {
       const settled = outcome.status === 'confirmed';
       const alreadyApplied = slot.holder?.txHash === outcome.tx.hash;
 
+      /*
+       * A claim can outlive its lock. If a second claim was issued and paid in
+       * that window, the slot has moved on: the price is higher and the payee
+       * is someone else. Applying the late one would overwrite a bump that was
+       * fairly paid for, so it is dropped. The late payer's money went to the
+       * previous holder and cannot be recalled without custody; the lock exists
+       * to keep that window small.
+       */
+      const stale = !alreadyApplied && (claim.priceNim !== slot.priceNim || !addressesMatch(claim.recipient, this.payee(slot)));
+      if (stale) {
+        slot.claims = slot.claims.filter((c) => c.token !== claim.token);
+        changed = true;
+        continue;
+      }
+
       if (!alreadyApplied) {
         this.applyBump(slot, claim, outcome.tx.hash, settled);
         changed = true;
