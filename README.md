@@ -2,7 +2,7 @@
 
 **The loser cashes out.**
 
-One message slot, shared by everyone in the app. Take it by paying 1.5x what the
+One message slot, shared by everyone in the app. Take it by paying 1.25x what the
 current holder paid. That payment goes straight to the person you took it from,
 so getting beaten is the outcome you want. The only person out of pocket is
 whoever is holding when the day closes, and they keep their message in the hall
@@ -12,7 +12,7 @@ A Mini App for [Nimiq Pay](https://nimiq.com).
 
 ## How a round works
 
-The slot opens at a floor of 100 NIM and each bump costs 1.5x the last price.
+The slot opens at a floor of 100 NIM and each bump costs 1.25x the last price.
 The day closes at 19:00 UTC, when whoever is holding keeps their message and the
 price drops back to the floor for tomorrow. Taking the slot inside the final two
 minutes pushes the close out by two, so the day cannot be won by turning up a
@@ -20,11 +20,11 @@ second before the end.
 
 | | Pays | To | Receives | Net |
 |---|---|---|---|---|
-| Aoife | 100 | previous winner | 150 from Ben | +50 |
-| Ben | 150 | Aoife | 225 from Cal | +75 |
-| Cal | 225 | Ben | 100 from tomorrow's opening bid | -125, keeps the slot |
+| Aoife | 100 | previous winner | 125 from Ben | +25 |
+| Ben | 125 | Aoife | 157 from Cal | +32 |
+| Cal | 157 | Ben | 100 from tomorrow's opening bid | -57, keeps the slot |
 
-Everyone who loses the slot walks away with 50% more than they put in. Cal pays
+Everyone who loses the slot walks away with 25% more than they put in. Cal pays
 for permanence. The opening bid of every day goes to the winner of the day
 before it.
 

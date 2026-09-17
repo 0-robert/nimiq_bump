@@ -1,4 +1,4 @@
-BUMP has one message slot, and everyone who opens the app is looking at the same one. You take it by paying 1.5x whatever the current holder paid. That payment goes straight from your wallet to theirs, so the person you take it from walks away with 50% more than they put in. The only one out of pocket is whoever is holding when the day closes, and they keep their message for good.
+BUMP has one message slot, and everyone who opens the app is looking at the same one. You take it by paying 1.25x whatever the current holder paid. That payment goes straight from your wallet to theirs, so the person you take it from walks away with 25% more than they put in. The only one out of pocket is whoever is holding when the day closes, and they keep their message for good.
 
 One winner a day, at 19:00 UTC. Taking the slot in the last two minutes pushes the close out by two, so it cannot be won by turning up a second before the end.
 

@@ -18,7 +18,7 @@ const RIVAL = 'NQ31 R1VA L0000 0000 0000 0000 0000 0000'.replace(/\s+/g, '').sli
 const FLOOR = 100;
 /** A real day closes at 19:00 UTC. Ninety seconds here so a close is watchable. */
 const DAY_MS = 90_000;
-const next = (n) => Math.ceil((n * 3) / 2);
+const next = (n) => Math.ceil((n * 5) / 4);
 
 const slot = {
   round: 12, price: FLOOR, holder: null, closesAt: Date.now() + DAY_MS,

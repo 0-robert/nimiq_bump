@@ -9,10 +9,10 @@ import { checkTx, isFinal } from '../src/verify.ts';
 
 const HOLDER = 'NQ22 JV9P 548B JL00 TRKS GT1P X3QJ 52BV ENK3';
 
-test('price ladder rises by half each time', () => {
+test('price ladder rises by a quarter each time', () => {
   assert.deepEqual(
-    [100, 150, 225, 338, 507, 761, 1142, 1713, 2570].slice(1),
-    [100, 150, 225, 338, 507, 761, 1142, 1713].map(nextPrice),
+    [100, 125, 157, 197, 247, 309, 387, 484, 605, 757].slice(1),
+    [100, 125, 157, 197, 247, 309, 387, 484, 605].map(nextPrice),
   );
 });
 
@@ -22,12 +22,12 @@ test('price always strictly increases, even at the smallest amounts', () => {
   }
 });
 
-test('being bumped pays back more than you put in', () => {
-  for (const paid of [100, 150, 225, 338, 1713]) {
+test('being replaced pays back more than you put in', () => {
+  for (const paid of [100, 125, 157, 197, 605]) {
     const { receives, profit } = payout(paid);
     assert.ok(profit > 0, `no profit at ${paid}`);
     assert.equal(receives, paid + profit);
-    assert.ok(profit / paid >= 0.49, `profit was only ${((profit / paid) * 100).toFixed(1)}% at ${paid}`);
+    assert.ok(profit / paid >= 0.24, `profit was only ${((profit / paid) * 100).toFixed(1)}% at ${paid}`);
   }
 });
 

@@ -17,19 +17,23 @@ export function nimToLuna(nim: number): number {
 }
 
 /**
- * The price ladder. Each bump costs ceil(1.5x) the last price, in whole NIM.
+ * The price ladder. Each bump costs ceil(1.25x) the last price, in whole NIM.
+ *
+ * 1.25 rather than 1.5: twenty replacements reach the price twelve did before,
+ * so a day holds more of them and more wallets get paid. Each displacement
+ * pays +25% instead of +50%.
  *
  * Ceil rather than round so the price strictly increases at every step: at a
  * floor of 1 NIM, rounding would stall at 2 forever. Whole NIM keeps the
  * display clean and sidesteps float entirely.
  *
- * 100 -> 150 -> 225 -> 338 -> 507 -> 761 -> 1142 -> 1713 -> 2570
+ * 100 -> 125 -> 157 -> 197 -> 247 -> 309 -> 387 -> 484 -> 605 -> 757
  */
 export function nextPrice(currentNim: number): number {
   if (!Number.isInteger(currentNim) || currentNim < 1) {
     throw new RangeError(`current price must be a positive whole NIM amount, got ${currentNim}`);
   }
-  return Math.ceil((currentNim * 3) / 2);
+  return Math.ceil((currentNim * 5) / 4);
 }
 
 /** What the holder clears by being bumped: the new price minus what they paid. */
