@@ -248,7 +248,16 @@ function renderAction() {
   button.disabled = false;
   button.dataset.sheen = 'false';
 
-  if (!looksLikeNimiqPay()) { label.textContent = 'Open this in Nimiq Pay'; button.disabled = true; return; }
+  if (!looksLikeNimiqPay()) {
+    // Outside Nimiq Pay there is no wallet to connect to. A dead button was the
+    // wrong answer: Pay accepts a URL through this deep link, so the button
+    // hands the page over to the app instead of refusing.
+    label.textContent = 'Open in Nimiq Pay';
+    button.disabled = false;
+    button.dataset.handoff = 'true';
+    return;
+  }
+  delete button.dataset.handoff;
   if (!address) { label.textContent = 'Connect wallet'; return; }
   if (mode === 'paying') { label.textContent = 'Confirm in your wallet'; button.disabled = true; return; }
   if (mode === 'waiting') { label.textContent = 'Waiting for confirmation'; button.disabled = true; return; }
@@ -403,6 +412,10 @@ async function release(token) {
 /* ---------- wiring ---------- */
 
 el.action.addEventListener('click', () => {
+  if (el.action.dataset.handoff === 'true') {
+    location.href = `https://nimpay.app/miniapps/open/${location.host}`;
+    return;
+  }
   if (!address) return connect();
   if (mode === 'composing') return bump();
   return compose();
