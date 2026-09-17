@@ -49,6 +49,8 @@ class_name = "Slot"
 binding = "AI"
 [env.test.vars]
 NETWORK_ID = "5"
+# Test only. Lets one wallet exercise the full replacement path against itself.
+ALLOW_SELF_REPLACE = "true"
 RPC_URL = "https://test-api.nimiq.watch/api/v1"
 FLOOR_NIM = "100"
 CLOSE_HOUR_UTC = "19"

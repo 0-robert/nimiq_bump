@@ -286,7 +286,7 @@ function renderAction() {
   if (mode === 'waiting') { label.textContent = 'Waiting for confirmation'; button.disabled = true; return; }
 
   const mine = view?.holder && normaliseAddress(view.holder.address) === address;
-  if (mine) { label.textContent = 'Your message is up'; button.disabled = true; return; }
+  if (mine && !view?.selfReplace) { label.textContent = 'Your message is up'; button.disabled = true; return; }
 
   if (view?.locked && mode !== 'composing') { label.textContent = 'Someone else is paying right now'; button.disabled = true; return; }
 

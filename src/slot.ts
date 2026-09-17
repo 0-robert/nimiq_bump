@@ -188,6 +188,7 @@ export class Slot {
       },
       floor: this.floor,
       watching: this.clients.size,
+      selfReplace: this.env.ALLOW_SELF_REPLACE === 'true',
       serverTime: now,
     };
   }
@@ -238,7 +239,14 @@ export class Slot {
     if (this.lock(slot)) {
       return this.fail(409, 'locked', 'Someone else is paying right now. Try again in a few seconds.');
     }
-    if (slot.holder && addressesMatch(slot.holder.address, bidder)) {
+    /*
+     * Replacing yourself is refused: paying yourself 1.25x is a wash, so a
+     * holder could ratchet the price up for free and wall everyone else out.
+     * The test worker alone relaxes this, so the whole replacement path can be
+     * exercised from one wallet with test NIM. Mainnet never sets the flag.
+     */
+    const selfReplace = this.env.ALLOW_SELF_REPLACE === 'true';
+    if (!selfReplace && slot.holder && addressesMatch(slot.holder.address, bidder)) {
       return this.fail(409, 'already-yours', 'Your message is already up.');
     }
 
@@ -256,7 +264,7 @@ export class Slot {
      * that skips verification. A payment to yourself keeps the one path.
      */
     const seedingGenesis = addressesMatch(recipient, this.env.GENESIS_ADDRESS) && slot.holder === null && slot.winners.length === 0;
-    if (addressesMatch(recipient, bidder) && !seedingGenesis) {
+    if (addressesMatch(recipient, bidder) && !seedingGenesis && !selfReplace) {
       return this.fail(409, 'self-pay', 'You cannot replace your own message.');
     }
 

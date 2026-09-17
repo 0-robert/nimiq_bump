@@ -8,4 +8,5 @@ interface Env {
   CLOSE_HOUR_UTC: string;
   CLAIM_SECONDS: string;
   GENESIS_ADDRESS: string;
+  ALLOW_SELF_REPLACE?: string;
 }
