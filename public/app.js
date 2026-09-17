@@ -413,7 +413,19 @@ async function release(token) {
 
 el.action.addEventListener('click', () => {
   if (el.action.dataset.handoff === 'true') {
-    location.href = `https://nimpay.app/miniapps/open/${location.host}`;
+    /*
+     * The custom scheme, not the nimpay.app link: that one looks the host up
+     * in Nimiq's directory and refuses anything unlisted. The scheme opens
+     * the installed app directly. Where nothing handles it, a desktop
+     * browser for instance, the page is still here a moment later, so say
+     * how to open it by hand instead of leaving a click that did nothing.
+     */
+    location.href = `nimiqpay://miniapp?url=${encodeURIComponent(location.origin)}`;
+    setTimeout(() => {
+      if (document.visibilityState === 'visible') {
+        say(`Nothing opened. In Nimiq Pay go to Mini Apps, then Custom URL, and paste ${location.host}`);
+      }
+    }, 1800);
     return;
   }
   if (!address) return connect();
