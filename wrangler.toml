@@ -2,6 +2,10 @@ name = "bump"
 main = "src/worker.ts"
 compatibility_date = "2026-09-01"
 
+# Custom domains on a zone already on the account. workers.dev would have put
+# the account name in every link.
+routes = [{ pattern = "prod.bump.roberthq.com", custom_domain = true }]
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
@@ -31,6 +35,7 @@ GENESIS_ADDRESS = "NQ05 L4NV YHX4 S8QV 4HT3 TVUU JE8D 2SHD BH2Y"
 # node exists for testnet, so this one reads the REST explorer instead.
 [env.test]
 name = "bump-test"
+routes = [{ pattern = "test.bump.roberthq.com", custom_domain = true }]
 [[env.test.durable_objects.bindings]]
 name = "SLOT"
 class_name = "Slot"

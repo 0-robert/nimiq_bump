@@ -8,6 +8,6 @@ Why I built it on Nimiq specifically: a busy day is twenty replacements, so twen
 
 The bit I spent the longest on is settlement. Nimiq's one second figure is inclusion, not finality. Micro blocks can be reorganised up to 59 deep, and Albatross writes failed transactions to the chain with the fee charged, so a transaction existing proves nothing. The slot changes hands as soon as the payment is included and says on its face that it is still confirming. Before the server treats it as final it checks the execution result, the recipient, the value, the network, the memo, and a full batch of confirmations. If a reorg ever undid one, the slot would go back.
 
-It runs at bump.robertsvassallo.workers.dev. Open it in Nimiq Pay through Mini Apps, then Custom URL. There is a testnet copy at bump-test.robertsvassallo.workers.dev if you want to try it with free NIM first. Code is on GitHub under MIT.
+It runs at prod.bump.roberthq.com. Open it in Nimiq Pay through Mini Apps, then Custom URL. There is a testnet copy at test.bump.roberthq.com if you want to try it with free NIM first. Code is on GitHub under MIT.
 
 Go and take it off me.
