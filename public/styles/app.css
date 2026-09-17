@@ -111,39 +111,35 @@ a { color:inherit; }
 }
 .hero-note { font-size:var(--base); color:var(--ink-soft); max-width:26ch; }
 
-/* The poster's name in the display face, with a highlighter stroke drawn under
-   it. The stroke wipes in from the left when the holder changes hands. */
+/*
+  The poster's name is on fire. The glyphs are filled with a fire gradient
+  that drifts, so they flicker, and sit on a soft ember glow. The fill stays
+  solid and the weight stays heavy, so it reads as a name first and a flame
+  second. When the holder changes it flares for a moment.
+*/
 .who {
-  position:relative; isolation:isolate;
-  display:inline-block; padding:0 3px;
+  display:inline-block; padding:0 2px;
   font-family:var(--font-display); font-weight:700;
-  font-size:1.1em; letter-spacing:-0.02em; color:var(--ink);
+  font-size:1.15em; letter-spacing:-0.02em; line-height:1.1;
+  background:linear-gradient(180deg, #ffe08a 0%, #ffb02e 30%, #ff6a12 58%, #ff2d00 80%, #ff9a3c 100%);
+  background-size:100% 320%;
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+  filter:drop-shadow(0 1px 0 rgb(120 30 0 / 0.35)) drop-shadow(0 0 7px rgb(255 96 0 / 0.38));
+  animation:flicker 1.7s ease-in-out infinite alternate;
 }
-.who::before {
-  content:''; position:absolute; z-index:-1;
-  left:0; right:0; bottom:0.06em; height:0.5em;
-  background:var(--orange);
-  transform-origin:left center;
+@keyframes flicker {
+  0%   { background-position:50% 8%; }
+  35%  { background-position:50% 55%; }
+  70%  { background-position:50% 30%; }
+  100% { background-position:50% 92%; }
 }
-@keyframes mark { from { transform:scaleX(0); } to { transform:scaleX(1); } }
-.who[data-stamp='true']::before { animation:mark 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-
-/* The message arrives one character at a time, each blurring up into place.
-   Delays are set per character in script so the whole line lands in a
-   duration that scales with its length. */
-.hero-title .ch { display:inline-block; }
-.hero-title[data-animate='true'] .ch {
-  opacity:0;
-  filter:blur(10px);
-  transform:translateY(0.35em);
-  animation:blur-in 480ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  animation-delay:var(--d, 0ms);
+@keyframes flare {
+  0%   { filter:drop-shadow(0 1px 0 rgb(120 30 0 / 0.35)) drop-shadow(0 0 22px rgb(255 110 0 / 0.95)); }
+  100% { filter:drop-shadow(0 1px 0 rgb(120 30 0 / 0.35)) drop-shadow(0 0 7px rgb(255 96 0 / 0.38)); }
 }
-@keyframes blur-in { to { opacity:1; filter:blur(0); transform:none; } }
-@media (prefers-reduced-motion:reduce) {
-  .who[data-stamp='true']::before { animation:none; }
-  .hero-title[data-animate='true'] .ch { opacity:1; filter:none; transform:none; animation:none; }
-}
+.who[data-flare='true'] { animation:flicker 1.7s ease-in-out infinite alternate, flare 1100ms ease-out both; }
+@media (prefers-reduced-motion:reduce) { .who, .who[data-flare='true'] { animation:none; } }
 .hero-title {
   grid-row:3;
   font-family:var(--font-display); font-weight:700;
